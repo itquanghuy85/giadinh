@@ -1,4 +1,4 @@
-package com.familysafety.family_safety
+package com.example.family
 
 import io.flutter.embedding.android.FlutterActivity
 
