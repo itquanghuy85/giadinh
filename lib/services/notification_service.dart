@@ -54,6 +54,24 @@ class NotificationService {
           importance: Importance.high,
         ),
       );
+
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          AppConstants.batteryChannelId,
+          AppConstants.batteryChannelName,
+          description: 'Battery level alerts',
+          importance: Importance.high,
+        ),
+      );
+
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          AppConstants.checkinChannelId,
+          AppConstants.checkinChannelName,
+          description: 'Auto check-in alerts',
+          importance: Importance.defaultImportance,
+        ),
+      );
     }
   }
 
@@ -133,6 +151,103 @@ class NotificationService {
           AppConstants.geofenceChannelName,
           importance: Importance.high,
           priority: Priority.high,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showBatteryLowNotification({
+    required String childName,
+    required int batteryLevel,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '⚠️ Low Battery Warning',
+      '$childName battery is at $batteryLevel%',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          AppConstants.batteryChannelId,
+          AppConstants.batteryChannelName,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showBatteryCriticalNotification({
+    required String childName,
+    required int batteryLevel,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '🔴 Critical Battery',
+      '$childName battery critically low at $batteryLevel%! May lose contact soon.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          AppConstants.batteryChannelId,
+          AppConstants.batteryChannelName,
+          importance: Importance.max,
+          priority: Priority.max,
+          category: AndroidNotificationCategory.alarm,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showConnectionLostNotification({
+    required String childName,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '📡 Connection Lost',
+      'No update from $childName for over 15 minutes',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          AppConstants.batteryChannelId,
+          AppConstants.batteryChannelName,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showDangerZoneNotification({
+    required String childName,
+    required String zoneName,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '🚨 Danger Zone Alert',
+      '$childName entered danger zone "$zoneName"',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          AppConstants.geofenceChannelId,
+          AppConstants.geofenceChannelName,
+          importance: Importance.max,
+          priority: Priority.max,
+          category: AndroidNotificationCategory.alarm,
+        ),
+      ),
+    );
+  }
+
+  Future<void> showCheckinNotification({
+    required String childName,
+    required String placeName,
+    required String time,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '📍 Auto Check-in',
+      '$childName arrived at $placeName at $time',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          AppConstants.checkinChannelId,
+          AppConstants.checkinChannelName,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
         ),
       ),
     );

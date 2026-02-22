@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
+import 'danger_zone_screen.dart';
+import 'schedule_screen.dart';
 
 class ParentSettingsScreen extends StatelessWidget {
   const ParentSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
     final auth = context.watch<AuthProvider>();
     final user = auth.currentUser;
     final family = auth.currentFamily;
+    final localeProv = context.watch<LocaleProvider>();
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -23,7 +28,7 @@ class ParentSettingsScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 8),
               Text(
-                'Settings',
+                t('settings'),
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 24),
@@ -106,30 +111,65 @@ class ParentSettingsScreen extends StatelessWidget {
 
               // Family Info
               _SettingsSection(
-                title: 'Family',
+                title: t('family'),
                 children: [
                   _SettingsTile(
                     icon: Icons.family_restroom,
                     title: family?.name ?? 'No Family',
-                    subtitle: 'Family Name',
+                    subtitle: t('family_name'),
                   ),
                   _SettingsTile(
                     icon: Icons.vpn_key,
                     title: family?.code ?? 'N/A',
-                    subtitle: 'Family Code',
+                    subtitle: t('family_code_label'),
                     trailing: IconButton(
                       icon: const Icon(Icons.copy, size: 18),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Code copied!')),
+                          SnackBar(content: Text(t('code_copied'))),
                         );
                       },
                     ),
                   ),
                   _SettingsTile(
                     icon: Icons.people,
-                    title: '${family?.members.length ?? 0} members',
-                    subtitle: 'Family Members',
+                    title: t('family_members_count', ['${family?.members.length ?? 0}']),
+                    subtitle: t('family_members'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Features
+              _SettingsSection(
+                title: t('zones'),
+                children: [
+                  _SettingsTile(
+                    icon: Icons.warning_amber_rounded,
+                    title: t('danger_zones'),
+                    subtitle: t('danger_zones_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DangerZoneScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.schedule,
+                    title: t('smart_schedule'),
+                    subtitle: t('schedule_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ScheduleScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -138,18 +178,31 @@ class ParentSettingsScreen extends StatelessWidget {
 
               // App Settings
               _SettingsSection(
-                title: 'App',
+                title: t('app'),
                 children: [
                   _SettingsTile(
+                    icon: Icons.language,
+                    title: t('language'),
+                    subtitle: localeProv.locale.languageCode == 'en'
+                        ? t('english')
+                        : t('vietnamese'),
+                    trailing: Switch(
+                      value: localeProv.locale.languageCode == 'vi',
+                      activeTrackColor: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      activeThumbColor: AppTheme.primaryColor,
+                      onChanged: (_) => localeProv.toggleLanguage(),
+                    ),
+                  ),
+                  _SettingsTile(
                     icon: Icons.privacy_tip_outlined,
-                    title: 'Privacy Policy',
-                    subtitle: 'Read our privacy policy',
+                    title: t('privacy_policy'),
+                    subtitle: t('privacy_policy_sub'),
                     onTap: () {},
                   ),
                   _SettingsTile(
                     icon: Icons.info_outline,
-                    title: 'About',
-                    subtitle: 'Version 1.0.0',
+                    title: t('about'),
+                    subtitle: t('version'),
                   ),
                 ],
               ),
@@ -164,20 +217,19 @@ class ParentSettingsScreen extends StatelessWidget {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Sign Out'),
-                        content: const Text(
-                            'Are you sure you want to sign out?'),
+                        title: Text(t('sign_out')),
+                        content: Text(t('sign_out_confirm')),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
+                            child: Text(t('cancel')),
                           ),
                           ElevatedButton(
                             onPressed: () => Navigator.pop(ctx, true),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.errorColor,
                             ),
-                            child: const Text('Sign Out'),
+                            child: Text(t('sign_out')),
                           ),
                         ],
                       ),
@@ -195,9 +247,9 @@ class ParentSettingsScreen extends StatelessWidget {
                     }
                   },
                   icon: const Icon(Icons.logout, color: AppTheme.errorColor),
-                  label: const Text(
-                    'Sign Out',
-                    style: TextStyle(color: AppTheme.errorColor),
+                  label: Text(
+                    t('sign_out'),
+                    style: const TextStyle(color: AppTheme.errorColor),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.errorColor),

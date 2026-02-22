@@ -5,6 +5,10 @@ import '../models/family.dart';
 import '../models/location_data.dart';
 import '../models/geofence.dart';
 import '../models/sos_alert.dart';
+import '../models/daily_report.dart';
+import '../models/timeline_event.dart';
+import '../models/danger_zone.dart';
+import '../models/schedule_config.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -210,5 +214,115 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList());
+  }
+
+  // ─── DAILY REPORT OPERATIONS ───
+
+  Future<void> saveDailyReport(DailyReport report) async {
+    await _db
+        .collection(AppConstants.dailyReportsCollection)
+        .doc(report.id)
+        .set(report.toFirestore(), SetOptions(merge: true));
+  }
+
+  Future<DailyReport?> getDailyReport(String userId, String date) async {
+    final query = await _db
+        .collection(AppConstants.dailyReportsCollection)
+        .where('userId', isEqualTo: userId)
+        .where('date', isEqualTo: date)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return null;
+    return DailyReport.fromFirestore(query.docs.first);
+  }
+
+  Stream<DailyReport?> dailyReportStream(String userId, String date) {
+    return _db
+        .collection(AppConstants.dailyReportsCollection)
+        .where('userId', isEqualTo: userId)
+        .where('date', isEqualTo: date)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.isNotEmpty
+            ? DailyReport.fromFirestore(snapshot.docs.first)
+            : null);
+  }
+
+  // ─── TIMELINE OPERATIONS ───
+
+  Future<void> saveTimelineEvent(TimelineEvent event) async {
+    await _db
+        .collection(AppConstants.timelineEventsCollection)
+        .doc(event.id)
+        .set(event.toFirestore(), SetOptions(merge: true));
+  }
+
+  Stream<List<TimelineEvent>> timelineEventsStream(
+      String userId, String date) {
+    return _db
+        .collection(AppConstants.timelineEventsCollection)
+        .where('userId', isEqualTo: userId)
+        .where('date', isEqualTo: date)
+        .orderBy('startTime', descending: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => TimelineEvent.fromFirestore(doc))
+            .toList());
+  }
+
+  // ─── DANGER ZONE OPERATIONS ───
+
+  Future<void> createDangerZone(DangerZone zone) async {
+    await _db
+        .collection(AppConstants.dangerZonesCollection)
+        .doc(zone.id)
+        .set(zone.toFirestore());
+  }
+
+  Future<void> deleteDangerZone(String zoneId) async {
+    await _db
+        .collection(AppConstants.dangerZonesCollection)
+        .doc(zoneId)
+        .delete();
+  }
+
+  Stream<List<DangerZone>> dangerZonesStream(String familyId) {
+    return _db
+        .collection(AppConstants.dangerZonesCollection)
+        .where('familyId', isEqualTo: familyId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => DangerZone.fromFirestore(doc))
+            .toList());
+  }
+
+  // ─── SCHEDULE CONFIG OPERATIONS ───
+
+  Future<void> saveScheduleConfig(ScheduleConfig config) async {
+    await _db
+        .collection(AppConstants.scheduleConfigCollection)
+        .doc(config.id)
+        .set(config.toFirestore(), SetOptions(merge: true));
+  }
+
+  Future<ScheduleConfig?> getScheduleConfig(String familyId) async {
+    final query = await _db
+        .collection(AppConstants.scheduleConfigCollection)
+        .where('familyId', isEqualTo: familyId)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return null;
+    return ScheduleConfig.fromFirestore(query.docs.first);
+  }
+
+  Stream<ScheduleConfig?> scheduleConfigStream(String familyId) {
+    return _db
+        .collection(AppConstants.scheduleConfigCollection)
+        .where('familyId', isEqualTo: familyId)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.isNotEmpty
+            ? ScheduleConfig.fromFirestore(snapshot.docs.first)
+            : null);
   }
 }

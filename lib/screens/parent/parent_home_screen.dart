@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
@@ -8,6 +9,7 @@ import '../../providers/sos_provider.dart';
 import 'parent_map_screen.dart';
 import 'parent_members_screen.dart';
 import 'parent_geofence_screen.dart';
+import 'reports_screen.dart';
 import 'parent_settings_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     ParentMapScreen(),
     ParentMembersScreen(),
     ParentGeofenceScreen(),
+    ReportsScreen(),
     ParentSettingsScreen(),
   ];
 
@@ -41,12 +44,16 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       context.read<FamilyProvider>().listenToMembers(familyId);
       context.read<FamilyProvider>().listenToChildren(familyId);
       context.read<LocationProvider>().listenToGeofences(familyId);
+      context.read<LocationProvider>().listenToDangerZones(familyId);
+      context.read<LocationProvider>().listenToScheduleConfig(familyId);
       context.read<SosProvider>().listenToAlerts(familyId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -65,21 +72,21 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
                   icon: Icons.map_outlined,
                   activeIcon: Icons.map,
-                  label: 'Map',
+                  label: t('map'),
                   isActive: _currentIndex == 0,
                   onTap: () => setState(() => _currentIndex = 0),
                 ),
                 _NavItem(
                   icon: Icons.people_outline,
                   activeIcon: Icons.people,
-                  label: 'Members',
+                  label: t('members'),
                   isActive: _currentIndex == 1,
                   onTap: () => setState(() => _currentIndex = 1),
                   badge: context.watch<SosProvider>().alerts.length,
@@ -87,16 +94,23 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 _NavItem(
                   icon: Icons.radar_outlined,
                   activeIcon: Icons.radar,
-                  label: 'Zones',
+                  label: t('zones'),
                   isActive: _currentIndex == 2,
                   onTap: () => setState(() => _currentIndex = 2),
                 ),
                 _NavItem(
-                  icon: Icons.settings_outlined,
-                  activeIcon: Icons.settings,
-                  label: 'Settings',
+                  icon: Icons.assessment_outlined,
+                  activeIcon: Icons.assessment,
+                  label: t('reports'),
                   isActive: _currentIndex == 3,
                   onTap: () => setState(() => _currentIndex = 3),
+                ),
+                _NavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings,
+                  label: t('settings'),
+                  isActive: _currentIndex == 4,
+                  onTap: () => setState(() => _currentIndex = 4),
                 ),
               ],
             ),

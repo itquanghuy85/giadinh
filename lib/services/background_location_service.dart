@@ -64,79 +64,138 @@ class BackgroundLocationService {
       service.stopSelf();
     });
 
-    // Periodic location update
-    Timer.periodic(
-      const Duration(seconds: 25),
-      (timer) async {
-        if (service is AndroidServiceInstance) {
-          if (await service.isForegroundService()) {
-            final userId = prefs.getString('current_user_id');
-            if (userId == null) return;
+    // Dynamic interval tracking variables
+    int currentIntervalSeconds = AppConstants.locationUpdateIntervalMs ~/ 1000;
+    int lastBatteryAlertLevel = 100;
 
-            try {
-              final position = await geo.Geolocator.getCurrentPosition(
-                locationSettings: const geo.LocationSettings(
-                  accuracy: geo.LocationAccuracy.high,
-                  timeLimit: Duration(seconds: 15),
-                ),
-              );
+    // Periodic location update with dynamic interval
+    _scheduleNextUpdate(
+      service,
+      prefs,
+      currentIntervalSeconds,
+      lastBatteryAlertLevel,
+    );
+  }
 
-              final batteryLevel = await Battery().batteryLevel;
+  static void _scheduleNextUpdate(
+    ServiceInstance service,
+    SharedPreferences prefs,
+    int intervalSeconds,
+    int lastBatteryAlert,
+  ) {
+    Future.delayed(Duration(seconds: intervalSeconds), () async {
+      if (service is AndroidServiceInstance) {
+        if (await service.isForegroundService()) {
+          final userId = prefs.getString('current_user_id');
+          if (userId == null) {
+            _scheduleNextUpdate(service, prefs, intervalSeconds, lastBatteryAlert);
+            return;
+          }
 
-              final db = FirebaseFirestore.instance;
+          try {
+            final position = await geo.Geolocator.getCurrentPosition(
+              locationSettings: const geo.LocationSettings(
+                accuracy: geo.LocationAccuracy.high,
+                timeLimit: Duration(seconds: 15),
+              ),
+            );
 
-              // Update current location
-              await db
-                  .collection(AppConstants.locationsCollection)
-                  .doc(userId)
-                  .set({
-                'userId': userId,
-                'lat': position.latitude,
-                'lng': position.longitude,
-                'accuracy': position.accuracy,
-                'speed': position.speed,
-                'batteryLevel': batteryLevel,
-                'timestamp': FieldValue.serverTimestamp(),
-              });
+            final batteryLevel = await Battery().batteryLevel;
 
-              // Add to history
-              await db
-                  .collection(AppConstants.locationsCollection)
-                  .doc(userId)
-                  .collection('history')
-                  .add({
-                'userId': userId,
-                'lat': position.latitude,
-                'lng': position.longitude,
-                'accuracy': position.accuracy,
-                'speed': position.speed,
-                'batteryLevel': batteryLevel,
-                'timestamp': FieldValue.serverTimestamp(),
-              });
+            final db = FirebaseFirestore.instance;
 
-              // Update user status
-              await db
-                  .collection(AppConstants.usersCollection)
-                  .doc(userId)
-                  .update({
-                'batteryLevel': batteryLevel,
-                'isOnline': true,
-                'lastActive': FieldValue.serverTimestamp(),
-              });
+            // Update current location
+            await db
+                .collection(AppConstants.locationsCollection)
+                .doc(userId)
+                .set({
+              'userId': userId,
+              'lat': position.latitude,
+              'lng': position.longitude,
+              'accuracy': position.accuracy,
+              'speed': position.speed,
+              'batteryLevel': batteryLevel,
+              'timestamp': FieldValue.serverTimestamp(),
+            });
 
-              // Update notification
-              service.setForegroundNotificationInfo(
-                title: AppConstants.appName,
-                content:
-                    'Sharing location • Battery: $batteryLevel%',
-              );
-            } catch (e) {
-              // Silent fail - will retry next cycle
+            // Add to history
+            await db
+                .collection(AppConstants.locationsCollection)
+                .doc(userId)
+                .collection('history')
+                .add({
+              'userId': userId,
+              'lat': position.latitude,
+              'lng': position.longitude,
+              'accuracy': position.accuracy,
+              'speed': position.speed,
+              'batteryLevel': batteryLevel,
+              'timestamp': FieldValue.serverTimestamp(),
+            });
+
+            // Update user status
+            await db
+                .collection(AppConstants.usersCollection)
+                .doc(userId)
+                .update({
+              'batteryLevel': batteryLevel,
+              'isOnline': true,
+              'lastActive': FieldValue.serverTimestamp(),
+            });
+
+            // ─── SCHEDULE MODE: Dynamic interval ───
+            int nextInterval = intervalSeconds;
+            final familyId = prefs.getString('family_id');
+            if (familyId != null) {
+              try {
+                final configSnap = await db
+                    .collection(AppConstants.scheduleConfigCollection)
+                    .where('familyId', isEqualTo: familyId)
+                    .limit(1)
+                    .get();
+                if (configSnap.docs.isNotEmpty) {
+                  final configData = configSnap.docs.first.data();
+                  final isEnabled = configData['isEnabled'] ?? false;
+                  if (isEnabled) {
+                    final now = DateTime.now();
+                    final schoolStart = configData['schoolStartHour'] ?? 6;
+                    final schoolStartMin = configData['schoolStartMinute'] ?? 0;
+                    final schoolEnd = configData['schoolEndHour'] ?? 18;
+                    final schoolEndMin = configData['schoolEndMinute'] ?? 0;
+                    final schoolDays =
+                        List<int>.from(configData['schoolDays'] ?? [1, 2, 3, 4, 5]);
+
+                    final schoolStartTime =
+                        now.hour * 60 + now.minute >= schoolStart * 60 + schoolStartMin;
+                    final schoolEndTime =
+                        now.hour * 60 + now.minute < schoolEnd * 60 + schoolEndMin;
+                    final isSchoolDay = schoolDays.contains(now.weekday);
+
+                    if (isSchoolDay && schoolStartTime && schoolEndTime) {
+                      nextInterval = configData['schoolIntervalSeconds'] ?? 20;
+                    } else {
+                      nextInterval = configData['offHoursIntervalSeconds'] ?? 180;
+                    }
+                  }
+                }
+              } catch (_) {}
             }
+
+            // Update notification
+            String modeLabel = nextInterval <= 30 ? '⚡ Intensive' : '🔋 Power Saving';
+            service.setForegroundNotificationInfo(
+              title: AppConstants.appName,
+              content:
+                  'Sharing location • Battery: $batteryLevel% • $modeLabel',
+            );
+
+            _scheduleNextUpdate(service, prefs, nextInterval, lastBatteryAlert);
+          } catch (e) {
+            _scheduleNextUpdate(service, prefs, intervalSeconds, lastBatteryAlert);
           }
         }
-      },
-    );
+      }
+    });
   }
 
   static Future<void> startService(String userId) async {

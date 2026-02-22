@@ -130,5 +130,72 @@ service cloud.firestore {
       // No one can delete SOS alerts (audit trail)
       allow delete: if false;
     }
+
+    // ─── DAILY REPORTS COLLECTION ───
+    match /daily_reports/{reportId} {
+      // Family members can read reports for their family's children
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        belongsToFamily(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId)
+      );
+
+      // The child user or parents can write reports
+      allow create, update: if isAuthenticated() && (
+        isOwner(request.resource.data.userId) ||
+        belongsToFamily(get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.familyId)
+      );
+
+      allow delete: if false;
+    }
+
+    // ─── TIMELINE EVENTS COLLECTION ───
+    match /timeline_events/{eventId} {
+      // Family members can read timeline events
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        belongsToFamily(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId)
+      );
+
+      allow create, update: if isAuthenticated() && (
+        isOwner(request.resource.data.userId) ||
+        belongsToFamily(get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.familyId)
+      );
+
+      allow delete: if false;
+    }
+
+    // ─── DANGER ZONES COLLECTION ───
+    match /danger_zones/{zoneId} {
+      // Family members can read danger zones
+      allow read: if isAuthenticated() &&
+        belongsToFamily(resource.data.familyId);
+
+      // Only parents can create/update/delete danger zones
+      allow create: if isAuthenticated() &&
+        isParentInFamily(request.resource.data.familyId);
+
+      allow update: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+
+      allow delete: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+    }
+
+    // ─── SCHEDULE CONFIGS COLLECTION ───
+    match /schedule_configs/{configId} {
+      // Family members can read schedule configs
+      allow read: if isAuthenticated() &&
+        belongsToFamily(resource.data.familyId);
+
+      // Only parents can create/update schedule configs
+      allow create: if isAuthenticated() &&
+        isParentInFamily(request.resource.data.familyId);
+
+      allow update: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+
+      allow delete: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+    }
   }
 }
