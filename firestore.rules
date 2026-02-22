@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── HELPER FUNCTIONS ───
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the user is the document owner
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Get user document
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Check if user belongs to a family
+    function belongsToFamily(familyId) {
+      return isAuthenticated() && getUserData().familyId == familyId;
+    }
+
+    // Check if user is a parent in the family
+    function isParentInFamily(familyId) {
+      return belongsToFamily(familyId) && getUserData().role == 'parent';
+    }
+
+    // ─── USERS COLLECTION ───
+    match /users/{userId} {
+      // Users can read their own data
+      // Family members can read each other's data
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        belongsToFamily(resource.data.familyId)
+      );
+
+      // Users can create their own profile
+      allow create: if isAuthenticated() && isOwner(userId);
+
+      // Users can update their own profile
+      allow update: if isAuthenticated() && isOwner(userId);
+
+      // Only the user themselves can delete their profile
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // ─── FAMILIES COLLECTION ───
+    match /families/{familyId} {
+      // Family members can read family data
+      allow read: if isAuthenticated() && (
+        belongsToFamily(familyId) ||
+        // Allow reading by family code (for joining)
+        resource.data.code == request.resource.data.code
+      );
+
+      // Any authenticated user can query families by code (for joining)
+      allow list: if isAuthenticated();
+
+      // Authenticated users can create families
+      allow create: if isAuthenticated() &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      // Only parents can update family data
+      allow update: if isAuthenticated() && isParentInFamily(familyId);
+
+      // Only the creator can delete the family
+      allow delete: if isAuthenticated() &&
+        resource.data.createdBy == request.auth.uid;
+    }
+
+    // ─── LOCATIONS COLLECTION ───
+    match /locations/{userId} {
+      // Family members can read location data
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        belongsToFamily(resource.data.familyId) ||
+        // Allow if the target user is in the same family
+        belongsToFamily(get(/databases/$(database)/documents/users/$(userId)).data.familyId)
+      );
+
+      // Only the user can write their own location
+      allow write: if isAuthenticated() && isOwner(userId);
+
+      // Location history subcollection
+      match /history/{historyId} {
+        allow read: if isAuthenticated() && (
+          isOwner(userId) ||
+          belongsToFamily(get(/databases/$(database)/documents/users/$(userId)).data.familyId)
+        );
+
+        allow write: if isAuthenticated() && isOwner(userId);
+      }
+    }
+
+    // ─── GEOFENCES COLLECTION ───
+    match /geofences/{geofenceId} {
+      // Family members can read geofences
+      allow read: if isAuthenticated() &&
+        belongsToFamily(resource.data.familyId);
+
+      // Only parents can create/update/delete geofences
+      allow create: if isAuthenticated() &&
+        isParentInFamily(request.resource.data.familyId);
+
+      allow update: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+
+      allow delete: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+    }
+
+    // ─── SOS ALERTS COLLECTION ───
+    match /sos_alerts/{alertId} {
+      // Family members can read SOS alerts
+      allow read: if isAuthenticated() &&
+        belongsToFamily(resource.data.familyId);
+
+      // Children can create SOS alerts
+      allow create: if isAuthenticated() &&
+        request.resource.data.childId == request.auth.uid;
+
+      // Parents can update (resolve) SOS alerts
+      allow update: if isAuthenticated() &&
+        isParentInFamily(resource.data.familyId);
+
+      // No one can delete SOS alerts (audit trail)
+      allow delete: if false;
+    }
+  }
+}
