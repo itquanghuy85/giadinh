@@ -20,7 +20,7 @@ class FamilyProvider extends ChangeNotifier {
         _firestoreService.familyMembersStream(familyId).listen((members) {
       _members = members;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('familyMembersStream error: $e'));
   }
 
   void listenToChildren(String familyId) {
@@ -29,7 +29,7 @@ class FamilyProvider extends ChangeNotifier {
         _firestoreService.familyChildrenStream(familyId).listen((children) {
       _children = children;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('familyChildrenStream error: $e'));
   }
 
   @override

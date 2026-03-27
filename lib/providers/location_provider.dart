@@ -139,7 +139,7 @@ class LocationProvider extends ChangeNotifier {
       }
 
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('locationStream error: $e'));
   }
 
   void listenToChildHistory(String childId) {
@@ -149,7 +149,7 @@ class LocationProvider extends ChangeNotifier {
         .listen((history) {
       _locationHistories[childId] = history;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('historyStream error: $e'));
   }
 
   void listenToFamilyChildren(List<AppUser> children) {
@@ -172,7 +172,7 @@ class LocationProvider extends ChangeNotifier {
         _firestoreService.geofencesStream(familyId).listen((fences) {
       _geofences = fences;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('geofencesStream error: $e'));
   }
 
   Future<void> createGeofence(Geofence geofence) async {
@@ -215,7 +215,7 @@ class LocationProvider extends ChangeNotifier {
         _firestoreService.dangerZonesStream(familyId).listen((zones) {
       _dangerZones = zones;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('dangerZonesStream error: $e'));
   }
 
   Future<void> createDangerZone(DangerZone zone) async {
@@ -516,7 +516,7 @@ class LocationProvider extends ChangeNotifier {
         _firestoreService.familyEventsStream(familyId).listen((events) {
       _familyEvents = events;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('familyEventsStream error: $e'));
 
     // Ensure reminder preferences are loaded before timer ticks.
     loadEventReminderSettings();
@@ -627,7 +627,7 @@ class LocationProvider extends ChangeNotifier {
       }
 
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('securityEventsStream error: $e'));
   }
 
   // ─── AREA TIME ANALYSIS ───
@@ -725,7 +725,7 @@ class LocationProvider extends ChangeNotifier {
         .listen((events) {
       _timelineEvents = events;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('timelineStream error: $e'));
   }
 
   Future<void> generateAndSaveTimeline(
@@ -761,7 +761,7 @@ class LocationProvider extends ChangeNotifier {
         _firestoreService.scheduleConfigStream(familyId).listen((config) {
       _scheduleConfig = config;
       notifyListeners();
-    });
+    }, onError: (e) => debugPrint('scheduleConfigStream error: $e'));
   }
 
   Future<void> saveScheduleConfig(ScheduleConfig config) async {

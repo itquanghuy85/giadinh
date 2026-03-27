@@ -20,14 +20,22 @@ import 'screens/child/child_home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
+  // Initialize Firebase (critical – must succeed)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize services
-  await NotificationService().initialize();
-  await BackgroundLocationService.initialize();
+  // Initialize services (non-critical – app must start even if these fail)
+  try {
+    await NotificationService().initialize();
+  } catch (_) {
+    debugPrint('NotificationService init failed');
+  }
+  try {
+    await BackgroundLocationService.initialize();
+  } catch (_) {
+    debugPrint('BackgroundLocationService init failed');
+  }
 
   // System UI
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

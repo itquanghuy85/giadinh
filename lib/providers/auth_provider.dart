@@ -14,7 +14,7 @@ class AuthProvider extends ChangeNotifier {
 
   AppUser? _currentUser;
   Family? _currentFamily;
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _error;
 
   AppUser? get currentUser => _currentUser;
@@ -35,17 +35,25 @@ class AuthProvider extends ChangeNotifier {
       } else {
         _currentUser = null;
         _currentFamily = null;
+        _isLoading = false;
         notifyListeners();
       }
     });
   }
 
   Future<void> _loadUserData(String uid) async {
-    _currentUser = await _firestoreService.getUser(uid);
-    if (_currentUser?.familyId != null) {
-      _currentFamily =
-          await _firestoreService.getFamily(_currentUser!.familyId!);
+    try {
+      _currentUser = await _firestoreService.getUser(uid);
+      if (_currentUser?.familyId != null) {
+        _currentFamily =
+            await _firestoreService.getFamily(_currentUser!.familyId!);
+      }
+    } catch (e) {
+      debugPrint('Failed to load user data: $e');
+      _currentUser = null;
+      _currentFamily = null;
     }
+    _isLoading = false;
     notifyListeners();
   }
 
