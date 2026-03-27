@@ -77,6 +77,8 @@ class FamilyCalendarScreen extends StatelessWidget {
     final locationCtrl = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(hours: 1));
     TimeOfDay selectedTime = TimeOfDay.fromDateTime(selectedDate);
+    RepeatType repeatType = RepeatType.none;
+    List<int> repeatDays = [];
 
     showModalBottomSheet(
       context: context,
@@ -90,7 +92,8 @@ class FamilyCalendarScreen extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -170,6 +173,69 @@ class FamilyCalendarScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // ─── REPEAT OPTIONS ───
+              Text(t('repeat'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 14)),
+              const SizedBox(height: 8),
+              SegmentedButton<RepeatType>(
+                segments: [
+                  ButtonSegment(
+                    value: RepeatType.none,
+                    label: Text(t('repeat_none'), style: const TextStyle(fontSize: 12)),
+                  ),
+                  ButtonSegment(
+                    value: RepeatType.daily,
+                    label: Text(t('repeat_daily'), style: const TextStyle(fontSize: 12)),
+                  ),
+                  ButtonSegment(
+                    value: RepeatType.weekly,
+                    label: Text(t('repeat_weekly'), style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+                selected: {repeatType},
+                onSelectionChanged: (val) {
+                  setState(() {
+                    repeatType = val.first;
+                    if (repeatType != RepeatType.weekly) {
+                      repeatDays = [];
+                    }
+                  });
+                },
+              ),
+              if (repeatType == RepeatType.weekly) ...[
+                const SizedBox(height: 12),
+                Text(t('repeat_days'),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: List.generate(7, (i) {
+                    final day = i + 1; // 1=Mon, 7=Sun
+                    final labels = [
+                      t('mon'), t('tue'), t('wed'), t('thu'),
+                      t('fri'), t('sat'), t('sun'),
+                    ];
+                    final selected = repeatDays.contains(day);
+                    return FilterChip(
+                      label: Text(labels[i]),
+                      selected: selected,
+                      onSelected: (val) {
+                        setState(() {
+                          if (val) {
+                            repeatDays.add(day);
+                          } else {
+                            repeatDays.remove(day);
+                          }
+                        });
+                      },
+                    );
+                  }),
+                ),
+              ],
+
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -187,6 +253,10 @@ class FamilyCalendarScreen extends StatelessWidget {
                       eventTime: selectedDate,
                       createdBy: auth.currentUser!.uid,
                       createdAt: DateTime.now(),
+                      repeatType: repeatType,
+                      repeatDays: repeatType == RepeatType.weekly
+                          ? (repeatDays..sort())
+                          : [],
                     );
                     context.read<LocationProvider>().createFamilyEvent(event);
                     Navigator.pop(ctx);
@@ -200,6 +270,7 @@ class FamilyCalendarScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
@@ -299,6 +370,17 @@ class _EventCard extends StatelessWidget {
                     style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 12,
+                    ),
+                  ),
+                ],
+                if (event.repeatType != RepeatType.none) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '🔁 ${event.repeatType == RepeatType.daily ? t('repeat_daily') : t('repeat_weekly')}',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],

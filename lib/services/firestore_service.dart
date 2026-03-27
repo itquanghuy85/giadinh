@@ -14,6 +14,7 @@ import '../models/security_event.dart';
 import '../models/screen_time_config.dart';
 import '../models/app_management_config.dart';
 import '../models/content_filter_config.dart';
+import '../models/financial_transaction.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -466,5 +467,45 @@ class FirestoreService {
         .map((snap) => snap.docs.isNotEmpty
             ? ContentFilterConfig.fromFirestore(snap.docs.first)
             : null);
+  }
+
+  // ─── FINANCIAL TRANSACTIONS ───
+
+  Future<void> createTransaction(FinancialTransaction transaction) async {
+    await _db
+        .collection(AppConstants.transactionsCollection)
+        .doc(transaction.id)
+        .set(transaction.toFirestore());
+  }
+
+  Future<void> deleteTransaction(String transactionId) async {
+    await _db
+        .collection(AppConstants.transactionsCollection)
+        .doc(transactionId)
+        .delete();
+  }
+
+  Stream<List<FinancialTransaction>> transactionsStream(
+    String familyId, {
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) {
+    Query query = _db
+        .collection(AppConstants.transactionsCollection)
+        .where('familyId', isEqualTo: familyId)
+        .orderBy('date', descending: true);
+
+    if (fromDate != null) {
+      query = query.where('date',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(fromDate));
+    }
+    if (toDate != null) {
+      query = query.where('date',
+          isLessThanOrEqualTo: Timestamp.fromDate(toDate));
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => FinancialTransaction.fromFirestore(doc))
+        .toList());
   }
 }

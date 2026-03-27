@@ -17,6 +17,7 @@ import 'screen_time_screen.dart';
 import 'event_reminder_settings_screen.dart';
 import 'app_management_screen.dart';
 import 'content_filter_screen.dart';
+import 'transactions_screen.dart';
 
 class ParentSettingsScreen extends StatelessWidget {
   const ParentSettingsScreen({super.key});
@@ -299,6 +300,19 @@ class ParentSettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  _SettingsTile(
+                    icon: Icons.account_balance_wallet,
+                    title: t('transactions'),
+                    subtitle: t('financial_report'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TransactionsScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
 
@@ -350,6 +364,72 @@ class ParentSettingsScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
+
+              // Delete Account
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(t('delete_account')),
+                        content: Text(t('delete_account_confirm')),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(t('cancel')),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                            child: Text(t('delete')),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true && context.mounted) {
+                      try {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t('deleting_account'))),
+                        );
+                        await auth.deleteAccountAndData();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (_) => const LoginScreen()),
+                            (route) => false,
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${t('error')}: $e'),
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.delete_forever,
+                      color: AppTheme.errorColor),
+                  label: Text(
+                    t('delete_data'),
+                    style: const TextStyle(color: AppTheme.errorColor),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppTheme.errorColor),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
 
               // Sign Out
               SizedBox(

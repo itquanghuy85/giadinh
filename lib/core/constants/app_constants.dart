@@ -20,6 +20,7 @@ class AppConstants {
   static const String screenTimeCollection = 'screen_time_configs';
   static const String appManagementCollection = 'app_management_configs';
   static const String contentFilterCollection = 'content_filter_configs';
+  static const String transactionsCollection = 'transactions';
 
   // Location Settings
   static const int locationUpdateIntervalMs = 20000; // 20 seconds

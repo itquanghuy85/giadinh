@@ -127,7 +127,7 @@ class ParentMembersScreen extends StatelessWidget {
                               size: 64, color: AppTheme.textHint),
                           const SizedBox(height: 16),
                           Text(
-                            t('no_members'),
+                            t('no_children'),
                             style: const TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 16,
@@ -135,10 +135,23 @@ class ParentMembersScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            t('share_code_invite'),
+                            t('share_code_to_add'),
                             style: const TextStyle(
                               color: AppTheme.textHint,
                               fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => _showFamilyCode(
+                              context,
+                              auth.currentFamily?.code ?? '',
+                            ),
+                            icon: const Icon(Icons.share),
+                            label: Text(t('add_child')),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
                             ),
                           ),
                         ],

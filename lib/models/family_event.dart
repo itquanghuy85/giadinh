@@ -1,4 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+enum RepeatType { none, daily, weekly }
 
 class FamilyEvent {
   final String id;
@@ -10,6 +13,8 @@ class FamilyEvent {
   final DateTime createdAt;
   final bool notified; // Legacy field for backward compatibility
   final List<int> remindedAtMinutes; // e.g. [60, 15, 5]
+  final RepeatType repeatType;
+  final List<int> repeatDays; // 1=Mon, 2=Tue, ..., 7=Sun (for weekly)
 
   FamilyEvent({
     required this.id,
@@ -21,6 +26,8 @@ class FamilyEvent {
     required this.createdAt,
     this.notified = false,
     this.remindedAtMinutes = const [],
+    this.repeatType = RepeatType.none,
+    this.repeatDays = const [],
   });
 
   factory FamilyEvent.fromFirestore(DocumentSnapshot doc) {
@@ -38,6 +45,20 @@ class FamilyEvent {
       reminded.add(15);
     }
 
+    final repeatStr = data['repeatType'] as String? ?? 'none';
+    final repeatType = RepeatType.values.firstWhere(
+      (e) => e.name == repeatStr,
+      orElse: () => RepeatType.none,
+    );
+
+    final rawRepeatDays = data['repeatDays'];
+    final repeatDays = rawRepeatDays is Iterable
+        ? rawRepeatDays
+            .map((e) => int.tryParse(e.toString()) ?? 0)
+            .where((e) => e >= 1 && e <= 7)
+            .toList()
+        : <int>[];
+
     return FamilyEvent(
       id: doc.id,
       familyId: data['familyId'] ?? '',
@@ -52,6 +73,8 @@ class FamilyEvent {
           : DateTime.now(),
       notified: legacyNotified,
       remindedAtMinutes: reminded,
+      repeatType: repeatType,
+      repeatDays: repeatDays,
     );
   }
 
@@ -65,6 +88,52 @@ class FamilyEvent {
       'createdAt': Timestamp.fromDate(createdAt),
       'notified': notified || remindedAtMinutes.contains(15),
       'remindedAtMinutes': remindedAtMinutes,
+      'repeatType': repeatType.name,
+      'repeatDays': repeatDays,
     };
+  }
+
+  /// Generate recurring event instances for the given date range.
+  List<FamilyEvent> generateOccurrences(DateTime from, DateTime to) {
+    if (repeatType == RepeatType.none) return [this];
+    final instances = <FamilyEvent>[];
+    final baseTime = TimeOfDay(hour: eventTime.hour, minute: eventTime.minute);
+
+    DateTime cursor = from;
+    while (!cursor.isAfter(to)) {
+      bool match = false;
+      if (repeatType == RepeatType.daily) {
+        match = true;
+      } else if (repeatType == RepeatType.weekly) {
+        // DateTime.weekday: 1=Mon, 7=Sun — same as our repeatDays
+        match = repeatDays.contains(cursor.weekday);
+      }
+
+      if (match) {
+        final dt = DateTime(
+          cursor.year,
+          cursor.month,
+          cursor.day,
+          baseTime.hour,
+          baseTime.minute,
+        );
+        if (!dt.isBefore(from) && !dt.isAfter(to)) {
+          instances.add(FamilyEvent(
+            id: '$id-${dt.millisecondsSinceEpoch}',
+            familyId: familyId,
+            title: title,
+            location: location,
+            eventTime: dt,
+            createdBy: createdBy,
+            createdAt: createdAt,
+            remindedAtMinutes: remindedAtMinutes,
+            repeatType: repeatType,
+            repeatDays: repeatDays,
+          ));
+        }
+      }
+      cursor = cursor.add(const Duration(days: 1));
+    }
+    return instances;
   }
 }

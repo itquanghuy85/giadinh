@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../models/app_user.dart';
 import '../models/family.dart';
@@ -255,6 +256,52 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = null;
     _currentFamily = null;
     notifyListeners();
+  }
+
+  /// Delete all user data from Firestore, remove from family, and delete Firebase Auth account.
+  Future<void> deleteAccountAndData() async {
+    final user = _currentUser;
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (user == null || firebaseUser == null) return;
+
+    try {
+      // Remove from family members list
+      if (user.familyId != null) {
+        await FirebaseFirestore.instance
+            .collection('families')
+            .doc(user.familyId)
+            .update({
+          'members': FieldValue.arrayRemove([user.uid]),
+        });
+      }
+
+      // Delete user document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .delete();
+
+      // Delete location data
+      await FirebaseFirestore.instance
+          .collection('locations')
+          .doc(user.uid)
+          .delete();
+
+      // Delete Firebase Auth account
+      await firebaseUser.delete();
+
+      _currentUser = null;
+      _currentFamily = null;
+      notifyListeners();
+    } catch (e) {
+      // If re-authentication is required, sign out instead
+      await _authService.signOut();
+      _currentUser = null;
+      _currentFamily = null;
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
   String _generateFamilyCode() {
