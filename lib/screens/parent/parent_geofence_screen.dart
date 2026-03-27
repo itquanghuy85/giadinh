@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/geofence.dart';
@@ -14,6 +16,7 @@ class ParentGeofenceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -23,14 +26,14 @@ class ParentGeofenceScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Text(
-                'Safe Zones',
+                t('safe_zones'),
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Create safe zones and get notified when your child enters or leaves.',
+                t('safe_zones_desc'),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -50,18 +53,18 @@ class ParentGeofenceScreen extends StatelessWidget {
                               size: 80,
                               color: AppTheme.textHint.withValues(alpha: 0.3)),
                           const SizedBox(height: 16),
-                          const Text(
-                            'No safe zones yet',
-                            style: TextStyle(
+                          Text(
+                            t('no_safe_zones'),
+                            style: const TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Tap + to create your first safe zone',
-                            style: TextStyle(
+                          Text(
+                            t('tap_add_zone'),
+                            style: const TextStyle(
                               color: AppTheme.textHint,
                               fontSize: 14,
                             ),
@@ -89,7 +92,7 @@ class ParentGeofenceScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddGeofenceDialog(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add Zone'),
+        label: Text(t('add_zone')),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -97,10 +100,12 @@ class ParentGeofenceScreen extends StatelessWidget {
   }
 
   void _showAddGeofenceDialog(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
     final nameController = TextEditingController();
     final radiusController =
         TextEditingController(text: '200');
     LatLng? selectedLocation;
+    bool nameNotEmpty = false;
 
     showModalBottomSheet(
       context: context,
@@ -135,9 +140,9 @@ class ParentGeofenceScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Add Safe Zone',
-                          style: TextStyle(
+                        Text(
+                          t('add_safe_zone'),
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                           ),
@@ -145,25 +150,30 @@ class ParentGeofenceScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         TextField(
                           controller: nameController,
-                          decoration: const InputDecoration(
-                            hintText: 'Zone name (e.g. Home, School)',
-                            prefixIcon: Icon(Icons.label_outline),
+                          decoration: InputDecoration(
+                            hintText: t('zone_name_hint'),
+                            prefixIcon: const Icon(Icons.label_outline),
                           ),
+                          onChanged: (val) {
+                            setState(() {
+                              nameNotEmpty = val.trim().isNotEmpty;
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: radiusController,
-                          decoration: const InputDecoration(
-                            hintText: 'Radius in meters',
-                            prefixIcon: Icon(Icons.radar),
-                            suffixText: 'meters',
+                          decoration: InputDecoration(
+                            hintText: t('radius_hint'),
+                            prefixIcon: const Icon(Icons.radar),
+                            suffixText: t('meters'),
                           ),
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Tap on map to select location:',
-                          style: TextStyle(
+                        Text(
+                          t('tap_map'),
+                          style: const TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 14,
                           ),
@@ -175,40 +185,49 @@ class ParentGeofenceScreen extends StatelessWidget {
                   // Map
                   Expanded(
                     child: ClipRRect(
-                      child: GoogleMap(
-                        initialCameraPosition: const CameraPosition(
-                          target: LatLng(10.8231, 106.6297),
-                          zoom: 14,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: LatLng(10.8231, 106.6297),
+                          initialZoom: 14,
+                          onTap: (tapPos, latLng) {
+                            setState(() {
+                              selectedLocation = latLng;
+                            });
+                          },
                         ),
-                        onTap: (latLng) {
-                          setState(() {
-                            selectedLocation = latLng;
-                          });
-                        },
-                        markers: selectedLocation != null
-                            ? {
-                                Marker(
-                                  markerId: const MarkerId('selected'),
-                                  position: selectedLocation!,
-                                ),
-                              }
-                            : {},
-                        circles: selectedLocation != null
-                            ? {
-                                Circle(
-                                  circleId: const CircleId('preview'),
-                                  center: selectedLocation!,
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.huluca.giadinh',
+                          ),
+                          if (selectedLocation != null)
+                            CircleLayer(
+                              circles: [
+                                CircleMarker(
+                                  point: selectedLocation!,
                                   radius: double.tryParse(
                                           radiusController.text) ??
                                       200,
-                                  fillColor: AppTheme.primaryColor
+                                  useRadiusInMeter: true,
+                                  color: AppTheme.primaryColor
                                       .withValues(alpha: 0.15),
-                                  strokeColor: AppTheme.primaryColor,
-                                  strokeWidth: 2,
+                                  borderColor: AppTheme.primaryColor,
+                                  borderStrokeWidth: 2,
                                 ),
-                              }
-                            : {},
-                        zoomControlsEnabled: false,
+                              ],
+                            ),
+                          if (selectedLocation != null)
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: selectedLocation!,
+                                  child: const Icon(Icons.location_on,
+                                      color: AppTheme.primaryColor, size: 36),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -217,10 +236,9 @@ class ParentGeofenceScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: GradientButton(
-                      text: 'Create Safe Zone',
+                      text: t('create_safe_zone'),
                       icon: Icons.check,
-                      onPressed: selectedLocation != null &&
-                              nameController.text.isNotEmpty
+                      onPressed: selectedLocation != null && nameNotEmpty
                           ? () {
                               final auth = ctx.read<AuthProvider>();
                               final locationProv =
@@ -262,6 +280,7 @@ class _GeofenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -302,7 +321,7 @@ class _GeofenceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Radius: ${fence.radius.toInt()}m',
+                  '${t('radius_hint')}: ${fence.radius.toInt()}m',
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 13,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../providers/auth_provider.dart';
@@ -15,6 +16,7 @@ class ParentMembersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final t = AppLocalizations.of(context).t;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -32,7 +34,7 @@ class ParentMembersScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Family Members',
+                          t('family_members'),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 4),
@@ -117,24 +119,24 @@ class ParentMembersScreen extends StatelessWidget {
                 builder: (context, familyProv, locationProv, _) {
                   final members = familyProv.members;
                   if (members.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.people_outline,
+                          const Icon(Icons.people_outline,
                               size: 64, color: AppTheme.textHint),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
-                            'No members yet',
-                            style: TextStyle(
+                            t('no_members'),
+                            style: const TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 16,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Share your family code to invite members',
-                            style: TextStyle(
+                            t('share_code_invite'),
+                            style: const TextStyle(
                               color: AppTheme.textHint,
                               fontSize: 14,
                             ),
@@ -182,17 +184,17 @@ class ParentMembersScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Family Code',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).t('family_code_title'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Share this code with family members',
-              style: TextStyle(color: AppTheme.textSecondary),
+            Text(
+              AppLocalizations.of(context).t('share_code_with'),
+              style: const TextStyle(color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 24),
             Container(
@@ -234,6 +236,7 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).t;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -300,12 +303,16 @@ class _MemberCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      member.displayName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppTheme.textPrimary,
+                    Flexible(
+                      child: Text(
+                        member.displayName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -320,7 +327,7 @@ class _MemberCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        member.isParent ? 'Parent' : 'Child',
+                        member.isParent ? t('parent') : t('child'),
                         style: TextStyle(
                           color: member.isParent
                               ? AppTheme.primaryColor
@@ -335,8 +342,8 @@ class _MemberCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   lastUpdate != null
-                      ? 'Last seen: ${DateFormat('HH:mm, dd/MM').format(lastUpdate!)}'
-                      : 'Never connected',
+                      ? t('last_seen', [DateFormat('HH:mm, dd/MM').format(lastUpdate!)])
+                      : t('never_connected'),
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 13,

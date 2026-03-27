@@ -25,7 +25,8 @@ dependencies:
 
   # Location & Maps
   geolocator: ^13.0.2
-  google_maps_flutter: ^2.12.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   geocoding: ^3.0.0
 
   # Background Service
@@ -42,11 +43,27 @@ dependencies:
   # Battery
   battery_plus: ^6.2.1
 
+  # Charts
+  fl_chart: ^0.70.2
+
+  # PDF Export
+  pdf: ^3.11.2
+  printing: ^5.14.2
+  path_provider: ^2.1.5
+
+  # Home Widget
+  home_widget: ^0.7.0
+
+  # Connectivity
+  connectivity_plus: ^6.1.4
+
   # Utils
   uuid: ^4.5.1
   intl: ^0.20.2
   shared_preferences: ^2.5.3
   fluttertoast: ^8.2.10
+  url_launcher: ^6.3.2
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

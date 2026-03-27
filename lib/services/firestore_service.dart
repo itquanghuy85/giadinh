@@ -9,6 +9,11 @@ import '../models/daily_report.dart';
 import '../models/timeline_event.dart';
 import '../models/danger_zone.dart';
 import '../models/schedule_config.dart';
+import '../models/family_event.dart';
+import '../models/security_event.dart';
+import '../models/screen_time_config.dart';
+import '../models/app_management_config.dart';
+import '../models/content_filter_config.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -323,6 +328,143 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs.isNotEmpty
             ? ScheduleConfig.fromFirestore(snapshot.docs.first)
+            : null);
+  }
+
+  // ─── FAMILY EVENT OPERATIONS ───
+
+  Future<void> createFamilyEvent(FamilyEvent event) async {
+    await _db
+        .collection(AppConstants.familyEventsCollection)
+        .doc(event.id)
+        .set(event.toFirestore());
+  }
+
+  Future<void> deleteFamilyEvent(String eventId) async {
+    await _db
+        .collection(AppConstants.familyEventsCollection)
+        .doc(eventId)
+        .delete();
+  }
+
+  Future<void> markEventNotified(String eventId) async {
+    await _db
+        .collection(AppConstants.familyEventsCollection)
+        .doc(eventId)
+        .update({'notified': true});
+  }
+
+  Future<void> markEventReminderStage(String eventId, int minutes) async {
+    await _db
+        .collection(AppConstants.familyEventsCollection)
+        .doc(eventId)
+        .update({
+      'notified': true,
+      'remindedAtMinutes': FieldValue.arrayUnion([minutes]),
+    });
+  }
+
+  Stream<List<FamilyEvent>> familyEventsStream(String familyId) {
+    return _db
+        .collection(AppConstants.familyEventsCollection)
+        .where('familyId', isEqualTo: familyId)
+        .orderBy('eventTime', descending: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => FamilyEvent.fromFirestore(doc))
+            .toList());
+  }
+
+  // ─── SECURITY EVENT OPERATIONS ───
+
+  Future<void> logSecurityEvent(SecurityEvent event) async {
+    await _db
+        .collection(AppConstants.securityEventsCollection)
+        .doc(event.id)
+        .set(event.toFirestore());
+  }
+
+  Stream<List<SecurityEvent>> securityEventsStream(String familyId) {
+    return _db
+        .collection(AppConstants.securityEventsCollection)
+        .where('familyId', isEqualTo: familyId)
+        .orderBy('timestamp', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => SecurityEvent.fromFirestore(doc))
+            .toList());
+  }
+
+  // ─── AREA TIME (embedded in daily report) ───
+
+  Future<void> updateDailyReportAreaTime(
+    String reportId,
+    Map<String, int> areaMinutes,
+  ) async {
+    await _db
+        .collection(AppConstants.dailyReportsCollection)
+        .doc(reportId)
+        .update({'areaMinutes': areaMinutes});
+  }
+
+  // ─── SCREEN TIME CONFIG ───
+
+  Future<void> saveScreenTimeConfig(ScreenTimeConfig config) async {
+    await _db
+        .collection(AppConstants.screenTimeCollection)
+        .doc(config.id)
+        .set(config.toFirestore());
+  }
+
+  Stream<ScreenTimeConfig?> screenTimeConfigStream(String childId) {
+    return _db
+        .collection(AppConstants.screenTimeCollection)
+        .where('childId', isEqualTo: childId)
+        .limit(1)
+        .snapshots()
+        .map((snap) => snap.docs.isNotEmpty
+            ? ScreenTimeConfig.fromFirestore(snap.docs.first)
+            : null);
+  }
+
+  // ─── APP MANAGEMENT CONFIG ───
+
+  Future<void> saveAppManagementConfig(AppManagementConfig config) async {
+    await _db
+        .collection(AppConstants.appManagementCollection)
+        .doc(config.id)
+        .set(config.toFirestore());
+  }
+
+  Stream<AppManagementConfig?> appManagementConfigStream(String childId) {
+    return _db
+        .collection(AppConstants.appManagementCollection)
+        .where('childId', isEqualTo: childId)
+        .limit(1)
+        .snapshots()
+        .map((snap) => snap.docs.isNotEmpty
+            ? AppManagementConfig.fromFirestore(snap.docs.first)
+            : null);
+  }
+
+  // ─── CONTENT FILTER CONFIG ───
+
+  Future<void> saveContentFilterConfig(ContentFilterConfig config) async {
+    await _db
+        .collection(AppConstants.contentFilterCollection)
+        .doc(config.id)
+        .set(config.toFirestore());
+  }
+
+  Stream<ContentFilterConfig?> contentFilterConfigStream(String childId) {
+    return _db
+        .collection(AppConstants.contentFilterCollection)
+        .where('childId', isEqualTo: childId)
+        .limit(1)
+        .snapshots()
+        .map((snap) => snap.docs.isNotEmpty
+            ? ContentFilterConfig.fromFirestore(snap.docs.first)
             : null);
   }
 }

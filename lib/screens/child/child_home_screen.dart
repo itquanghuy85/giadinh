@@ -79,7 +79,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
@@ -285,7 +285,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                 ],
               ),
 
-              const Spacer(),
+              const SizedBox(height: 40),
 
               // SOS Button
               _SosButton(

@@ -135,9 +135,9 @@ class DangerZoneScreen extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: latController,
-                      decoration: const InputDecoration(
-                        labelText: 'Latitude',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t('latitude'),
+                        border: const OutlineInputBorder(),
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -147,9 +147,9 @@ class DangerZoneScreen extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: lngController,
-                      decoration: const InputDecoration(
-                        labelText: 'Longitude',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t('longitude'),
+                        border: const OutlineInputBorder(),
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),

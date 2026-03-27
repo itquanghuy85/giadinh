@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.family"
+    namespace = "com.huluca.giadinh"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.family"
+        applicationId = "com.huluca.giadinh"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1043819133314:android:808bee4cbdc81ef5c6779b",
         "android_client_info": {
-          "package_name": "com.example.family"
+          "package_name": "com.huluca.giadinh"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "1043819133314-79nc0ush6d965smln18gpsnru7gbs91h.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.family",
+            "package_name": "com.huluca.giadinh",
             "certificate_hash": "28bed0a3a96e0c1ce3d466ede1b7fe4572c8070b"
           }
         },

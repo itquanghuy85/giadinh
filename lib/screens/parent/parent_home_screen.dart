@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/sos_provider.dart';
+import 'parent_dashboard_screen.dart';
 import 'parent_map_screen.dart';
 import 'parent_members_screen.dart';
 import 'parent_geofence_screen.dart';
@@ -23,6 +24,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   int _currentIndex = 0;
 
   final _pages = const [
+    ParentDashboardScreen(),
     ParentMapScreen(),
     ParentMembersScreen(),
     ParentGeofenceScreen(),
@@ -46,6 +48,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       context.read<LocationProvider>().listenToGeofences(familyId);
       context.read<LocationProvider>().listenToDangerZones(familyId);
       context.read<LocationProvider>().listenToScheduleConfig(familyId);
+      context.read<LocationProvider>().listenToFamilyEvents(familyId);
+      context.read<LocationProvider>().loadEventReminderSettings();
+      context.read<LocationProvider>().listenToSecurityEvents(familyId);
+      context.read<LocationProvider>().loadNightAlertSettings();
+      context.read<LocationProvider>().startDisconnectionMonitor();
       context.read<SosProvider>().listenToAlerts(familyId);
     }
   }
@@ -74,43 +81,61 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(
-                  icon: Icons.map_outlined,
-                  activeIcon: Icons.map,
-                  label: t('map'),
-                  isActive: _currentIndex == 0,
-                  onTap: () => setState(() => _currentIndex = 0),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.dashboard_outlined,
+                    activeIcon: Icons.dashboard_rounded,
+                    label: t('home'),
+                    isActive: _currentIndex == 0,
+                    onTap: () => setState(() => _currentIndex = 0),
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.people_outline,
-                  activeIcon: Icons.people,
-                  label: t('members'),
-                  isActive: _currentIndex == 1,
-                  onTap: () => setState(() => _currentIndex = 1),
-                  badge: context.watch<SosProvider>().alerts.length,
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.map_outlined,
+                    activeIcon: Icons.map,
+                    label: t('map'),
+                    isActive: _currentIndex == 1,
+                    onTap: () => setState(() => _currentIndex = 1),
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.radar_outlined,
-                  activeIcon: Icons.radar,
-                  label: t('zones'),
-                  isActive: _currentIndex == 2,
-                  onTap: () => setState(() => _currentIndex = 2),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.people_outline,
+                    activeIcon: Icons.people,
+                    label: t('members'),
+                    isActive: _currentIndex == 2,
+                    onTap: () => setState(() => _currentIndex = 2),
+                    badge: context.watch<SosProvider>().alerts.length,
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.assessment_outlined,
-                  activeIcon: Icons.assessment,
-                  label: t('reports'),
-                  isActive: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.radar_outlined,
+                    activeIcon: Icons.radar,
+                    label: t('zones'),
+                    isActive: _currentIndex == 3,
+                    onTap: () => setState(() => _currentIndex = 3),
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.settings_outlined,
-                  activeIcon: Icons.settings,
-                  label: t('settings'),
-                  isActive: _currentIndex == 4,
-                  onTap: () => setState(() => _currentIndex = 4),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.assessment_outlined,
+                    activeIcon: Icons.assessment,
+                    label: t('reports'),
+                    isActive: _currentIndex == 4,
+                    onTap: () => setState(() => _currentIndex = 4),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.settings_outlined,
+                    activeIcon: Icons.settings,
+                    label: t('settings'),
+                    isActive: _currentIndex == 5,
+                    onTap: () => setState(() => _currentIndex = 5),
+                  ),
                 ),
               ],
             ),
@@ -145,7 +170,7 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         decoration: BoxDecoration(
           color:
               isActive ? AppTheme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
@@ -160,7 +185,7 @@ class _NavItem extends StatelessWidget {
                 Icon(
                   isActive ? activeIcon : icon,
                   color: isActive ? AppTheme.primaryColor : AppTheme.textHint,
-                  size: 24,
+                  size: 22,
                 ),
                 if (badge > 0)
                   Positioned(
@@ -189,7 +214,7 @@ class _NavItem extends StatelessWidget {
               label,
               style: TextStyle(
                 color: isActive ? AppTheme.primaryColor : AppTheme.textHint,
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

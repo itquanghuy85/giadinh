@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
+import '../common/user_guide_screen.dart';
 import 'danger_zone_screen.dart';
 import 'schedule_screen.dart';
+import 'family_calendar_screen.dart';
+import 'security_alerts_screen.dart';
+import 'night_alert_screen.dart';
+import 'area_time_screen.dart';
+import 'pdf_report_screen.dart';
+import 'screen_time_screen.dart';
+import 'event_reminder_settings_screen.dart';
+import 'app_management_screen.dart';
+import 'content_filter_screen.dart';
 
 class ParentSettingsScreen extends StatelessWidget {
   const ParentSettingsScreen({super.key});
@@ -171,6 +182,123 @@ class ParentSettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  _SettingsTile(
+                    icon: Icons.calendar_month,
+                    title: t('family_calendar'),
+                    subtitle: t('tap_add_event'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FamilyCalendarScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.notifications_active_rounded,
+                    title: t('event_reminder_settings'),
+                    subtitle: t('event_reminder_settings_sub'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EventReminderSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.shield_outlined,
+                    title: t('security_alerts'),
+                    subtitle: t('security_events_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SecurityAlertsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.nightlight_round,
+                    title: t('night_alert'),
+                    subtitle: t('night_alert_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NightAlertScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.pie_chart_outline,
+                    title: t('area_time_analysis'),
+                    subtitle: t('time_by_area'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AreaTimeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.picture_as_pdf,
+                    title: t('pdf_report'),
+                    subtitle: t('pdf_report_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PdfReportScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.timer,
+                    title: t('screen_time'),
+                    subtitle: t('screen_time_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ScreenTimeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.apps_rounded,
+                    title: t('app_management'),
+                    subtitle: t('app_management_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AppManagementScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.shield_rounded,
+                    title: t('content_filter'),
+                    subtitle: t('content_filter_desc'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ContentFilterScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
 
@@ -197,7 +325,21 @@ class ParentSettingsScreen extends StatelessWidget {
                     icon: Icons.privacy_tip_outlined,
                     title: t('privacy_policy'),
                     subtitle: t('privacy_policy_sub'),
-                    onTap: () {},
+                    onTap: () => launchUrl(
+                      Uri.parse('https://family-safety-app.web.app/privacy'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.help_outline,
+                    title: t('user_guide'),
+                    subtitle: t('user_guide_subtitle'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const UserGuideScreen(),
+                      ),
+                    ),
                   ),
                   _SettingsTile(
                     icon: Icons.info_outline,

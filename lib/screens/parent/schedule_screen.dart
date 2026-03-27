@@ -31,21 +31,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
 
     final saved = locProv.scheduleConfig;
-    if (saved != null && !_initialized) {
+    if (saved != null) {
       _config = saved;
-    }
-    if (!_initialized || saved == null) {
+    } else {
       _config = ScheduleConfig(
         id: const Uuid().v4(),
         familyId: familyId ?? '',
         isEnabled: false,
       );
-    } else {
-      _config = saved;
     }
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      appBar: AppBar(title: Text(t('smart_schedule'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
