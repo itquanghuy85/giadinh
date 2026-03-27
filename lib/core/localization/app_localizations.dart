@@ -52,6 +52,7 @@ class AppLocalizations {
       'sign_in_subtitle':
           'Keep your family safe and connected.\nReal-time location sharing & alerts.',
       'sign_in_google': 'Sign in with Google',
+      'sign_in_apple': 'Sign in with Apple',
       'sign_in_agree':
           'By signing in, you agree to our Privacy Policy\nand Terms of Service.',
       'welcome': 'Welcome,\n{}! 👋',
@@ -679,6 +680,7 @@ class AppLocalizations {
       'sign_in_subtitle':
           'Giữ gia đình an toàn và kết nối.\nChia sẻ vị trí & cảnh báo thời gian thực.',
       'sign_in_google': 'Đăng nhập bằng Google',
+      'sign_in_apple': 'Đăng nhập bằng Apple',
       'sign_in_agree':
           'Bằng việc đăng nhập, bạn đồng ý với\nChính sách bảo mật và Điều khoản dịch vụ.',
       'welcome': 'Xin chào,\n{}! 👋',

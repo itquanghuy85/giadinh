@@ -17,6 +17,10 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
 
+  /// True while an active sign-in is in progress;
+  /// prevents the auth state listener from overriding _currentUser.
+  bool _isSigningIn = false;
+
   AppUser? get currentUser => _currentUser;
   Family? get currentFamily => _currentFamily;
   bool get isLoading => _isLoading;
@@ -30,11 +34,22 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _init() async {
     _authService.authStateChanges.listen((user) async {
+      // Don't override state while sign-in is in progress
+      if (_isSigningIn) return;
+
       if (user != null) {
         await _loadUserData(user.uid);
       } else {
         _currentUser = null;
         _currentFamily = null;
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
+
+    // Safety timeout: if auth stream never fires, stop loading after 5s
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_isLoading && !_isSigningIn) {
         _isLoading = false;
         notifyListeners();
       }
@@ -58,11 +73,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signInWithGoogle() async {
+    _isSigningIn = true;
     _setLoading(true);
     _error = null;
     try {
       final credential = await _authService.signInWithGoogle();
       if (credential?.user == null) {
+        _error = 'Sign-in was cancelled or failed. Please try again.';
+        _isSigningIn = false;
         _setLoading(false);
         return false;
       }
@@ -71,13 +89,12 @@ class AuthProvider extends ChangeNotifier {
       final existingUser = await _firestoreService.getUser(user.uid);
 
       if (existingUser == null) {
-        // New user - will need to select role
         _currentUser = AppUser(
           uid: user.uid,
           email: user.email ?? '',
           displayName: user.displayName ?? '',
           photoUrl: user.photoURL,
-          role: UserRole.parent, // default, will be changed
+          role: UserRole.parent,
         );
       } else {
         _currentUser = existingUser;
@@ -87,14 +104,65 @@ class AuthProvider extends ChangeNotifier {
         }
       }
 
+      _isSigningIn = false;
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {
       _error = e.message;
+      _isSigningIn = false;
       _setLoading(false);
       return false;
     } catch (e) {
       _error = e.toString();
+      _isSigningIn = false;
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> signInWithApple() async {
+    _isSigningIn = true;
+    _setLoading(true);
+    _error = null;
+    try {
+      final credential = await _authService.signInWithApple();
+      if (credential?.user == null) {
+        _error = 'Apple sign-in was cancelled or failed. Please try again.';
+        _isSigningIn = false;
+        _setLoading(false);
+        return false;
+      }
+
+      final user = credential!.user!;
+      final existingUser = await _firestoreService.getUser(user.uid);
+
+      if (existingUser == null) {
+        _currentUser = AppUser(
+          uid: user.uid,
+          email: user.email ?? '',
+          displayName: user.displayName ?? '',
+          photoUrl: user.photoURL,
+          role: UserRole.parent,
+        );
+      } else {
+        _currentUser = existingUser;
+        if (existingUser.familyId != null) {
+          _currentFamily =
+              await _firestoreService.getFamily(existingUser.familyId!);
+        }
+      }
+
+      _isSigningIn = false;
+      _setLoading(false);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _error = e.message;
+      _isSigningIn = false;
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      _isSigningIn = false;
       _setLoading(false);
       return false;
     }

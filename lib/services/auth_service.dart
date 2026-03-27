@@ -27,6 +27,17 @@ class AuthService {
     }
   }
 
+  Future<UserCredential?> signInWithApple() async {
+    try {
+      final appleProvider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+      return await _auth.signInWithProvider(appleProvider);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await Future.wait([
       _auth.signOut(),

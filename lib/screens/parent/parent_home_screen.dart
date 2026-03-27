@@ -23,37 +23,50 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   int _currentIndex = 0;
 
-  final _pages = const [
-    ParentDashboardScreen(),
-    ParentMapScreen(),
-    ParentMembersScreen(),
-    ParentGeofenceScreen(),
-    ReportsScreen(),
-    ParentSettingsScreen(),
+  /// Tracks which tabs have been visited so they stay alive after first use.
+  final Set<int> _loadedTabs = {0};
+
+  static const _pageBuilders = <Widget Function()>[
+    ParentDashboardScreen.new,
+    ParentMapScreen.new,
+    ParentMembersScreen.new,
+    ParentGeofenceScreen.new,
+    ReportsScreen.new,
+    ParentSettingsScreen.new,
   ];
 
   @override
   void initState() {
     super.initState();
-    _initListeners();
+    // Defer heavy listener setup to after the first frame so the UI renders fast.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initListeners());
   }
 
   void _initListeners() {
+    if (!mounted) return;
     final auth = context.read<AuthProvider>();
     if (auth.currentUser?.familyId != null) {
       final familyId = auth.currentUser!.familyId!;
+      final loc = context.read<LocationProvider>();
+      final fam = context.read<FamilyProvider>();
 
-      context.read<FamilyProvider>().listenToMembers(familyId);
-      context.read<FamilyProvider>().listenToChildren(familyId);
-      context.read<LocationProvider>().listenToGeofences(familyId);
-      context.read<LocationProvider>().listenToDangerZones(familyId);
-      context.read<LocationProvider>().listenToScheduleConfig(familyId);
-      context.read<LocationProvider>().listenToFamilyEvents(familyId);
-      context.read<LocationProvider>().loadEventReminderSettings();
-      context.read<LocationProvider>().listenToSecurityEvents(familyId);
-      context.read<LocationProvider>().loadNightAlertSettings();
-      context.read<LocationProvider>().startDisconnectionMonitor();
+      // Critical listeners first
+      fam.listenToMembers(familyId);
+      fam.listenToChildren(familyId);
+      loc.listenToGeofences(familyId);
+      loc.listenToFamilyEvents(familyId);
       context.read<SosProvider>().listenToAlerts(familyId);
+
+      // Defer secondary listeners slightly so critical data loads first
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+        loc.listenToDangerZones(familyId);
+        loc.listenToScheduleConfig(familyId);
+        loc.loadEventReminderSettings();
+        loc.listenToSecurityEvents(familyId);
+        loc.loadNightAlertSettings();
+        loc.startDisconnectionMonitor();
+      });
     }
   }
 
@@ -62,10 +75,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     final t = AppLocalizations.of(context).t;
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: _buildBody(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -88,7 +98,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.dashboard_rounded,
                     label: t('home'),
                     isActive: _currentIndex == 0,
-                    onTap: () => setState(() => _currentIndex = 0),
+                    onTap: () => _switchTab(0),
                   ),
                 ),
                 Expanded(
@@ -97,7 +107,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.map,
                     label: t('map'),
                     isActive: _currentIndex == 1,
-                    onTap: () => setState(() => _currentIndex = 1),
+                    onTap: () => _switchTab(1),
                   ),
                 ),
                 Expanded(
@@ -106,7 +116,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.people,
                     label: t('members'),
                     isActive: _currentIndex == 2,
-                    onTap: () => setState(() => _currentIndex = 2),
+                    onTap: () => _switchTab(2),
                     badge: context.watch<SosProvider>().alerts.length,
                   ),
                 ),
@@ -116,7 +126,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.radar,
                     label: t('zones'),
                     isActive: _currentIndex == 3,
-                    onTap: () => setState(() => _currentIndex = 3),
+                    onTap: () => _switchTab(3),
                   ),
                 ),
                 Expanded(
@@ -125,7 +135,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.assessment,
                     label: t('reports'),
                     isActive: _currentIndex == 4,
-                    onTap: () => setState(() => _currentIndex = 4),
+                    onTap: () => _switchTab(4),
                   ),
                 ),
                 Expanded(
@@ -134,7 +144,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     activeIcon: Icons.settings,
                     label: t('settings'),
                     isActive: _currentIndex == 5,
-                    onTap: () => setState(() => _currentIndex = 5),
+                    onTap: () => _switchTab(5),
                   ),
                 ),
               ],
@@ -142,6 +152,26 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _switchTab(int index) {
+    setState(() {
+      _currentIndex = index;
+      _loadedTabs.add(index);
+    });
+  }
+
+  /// Lazy IndexedStack: only builds tabs that have been visited at least once.
+  Widget _buildBody() {
+    return IndexedStack(
+      index: _currentIndex,
+      children: List.generate(_pageBuilders.length, (i) {
+        if (_loadedTabs.contains(i)) {
+          return _pageBuilders[i]();
+        }
+        return const SizedBox.shrink();
+      }),
     );
   }
 }
