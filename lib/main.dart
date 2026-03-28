@@ -76,7 +76,7 @@ class FamilySafetyApp extends StatelessWidget {
       child: Consumer<LocaleProvider>(
         builder: (context, localeProv, _) {
           return MaterialApp(
-            title: 'Family Safety',
+            title: 'Family Safety',  // MaterialApp title is not user-visible on most platforms
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             locale: localeProv.locale,
@@ -115,7 +115,7 @@ class AuthGate extends StatelessWidget {
               CircularProgressIndicator(color: AppTheme.primaryColor),
               SizedBox(height: 16),
               Text(
-                'Loading...',
+                '...',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 16,

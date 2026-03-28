@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -48,6 +49,13 @@ class BackgroundLocationService {
   @pragma('vm:entry-point')
   static Future<void> onStart(ServiceInstance service) async {
     DartPluginRegistrant.ensureInitialized();
+
+    // Initialize Firebase in the background isolate
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {
+      // Already initialized or failed – continue with best effort
+    }
 
     final prefs = await SharedPreferences.getInstance();
 

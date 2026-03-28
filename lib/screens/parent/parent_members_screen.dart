@@ -39,7 +39,7 @@ class ParentMembersScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Code: ${auth.currentFamily?.code ?? "N/A"}',
+                          t('family_code', [auth.currentFamily?.code ?? t('na')]),
                           style: TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w600,
@@ -82,7 +82,7 @@ class ParentMembersScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '🚨 SOS from ${alert.childName}',
+                                  t('sos_from', [alert.childName]),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -90,7 +90,7 @@ class ParentMembersScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  'Lat: ${alert.latitude.toStringAsFixed(4)}, Lng: ${alert.longitude.toStringAsFixed(4)}',
+                                  t('sos_coordinates', [alert.latitude.toStringAsFixed(4), alert.longitude.toStringAsFixed(4)]),
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 12,

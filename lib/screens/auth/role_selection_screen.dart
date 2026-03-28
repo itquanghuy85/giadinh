@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import 'family_setup_screen.dart';
@@ -11,6 +12,7 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final t = AppLocalizations.of(context).t;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -23,14 +25,14 @@ class RoleSelectionScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               Text(
-                'Welcome,\n${auth.currentUser?.displayName ?? 'User'}! 👋',
+                t('welcome').replaceAll('{}', auth.currentUser?.displayName ?? 'User'),
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
 
               const SizedBox(height: 12),
 
               Text(
-                'Choose your role to get started:',
+                t('choose_role'),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
@@ -40,8 +42,8 @@ class RoleSelectionScreen extends StatelessWidget {
 
               // Parent Card
               _RoleCard(
-                title: 'I\'m a Parent',
-                subtitle: 'Create a family group and\nmonitor your children\'s safety',
+                title: t('im_parent'),
+                subtitle: t('parent_subtitle'),
                 icon: Icons.admin_panel_settings_outlined,
                 gradient: AppTheme.primaryGradient,
                 onTap: () {
@@ -57,8 +59,8 @@ class RoleSelectionScreen extends StatelessWidget {
 
               // Child Card
               _RoleCard(
-                title: 'I\'m a Child',
-                subtitle: 'Join your family group and\nshare your location safely',
+                title: t('im_child'),
+                subtitle: t('child_subtitle'),
                 icon: Icons.child_care_outlined,
                 gradient: const LinearGradient(
                   colors: [Color(0xFF00D9A6), Color(0xFF00BFA5)],
@@ -81,7 +83,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => auth.signOut(),
                   icon: const Icon(Icons.logout, size: 18),
-                  label: const Text('Sign out & use different account'),
+                  label: Text(t('sign_out_other')),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.textSecondary,
                   ),

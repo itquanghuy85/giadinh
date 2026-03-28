@@ -66,8 +66,10 @@ class AuthProvider extends ChangeNotifier {
           _currentFamily =
               await _firestoreService.getFamily(loaded.familyId!);
         }
-      } else if (_currentUser?.uid != uid) {
-        // Only clear if the signed-in user doesn't already match
+      } else {
+        // User exists in Firebase Auth but not in Firestore.
+        // Sign them out so they can re-sign-in properly.
+        await _authService.signOut();
         _currentUser = null;
         _currentFamily = null;
       }

@@ -1,7 +1,5 @@
 """Generate a professional Family Safety app icon (1024x1024).
-
-Design: Modern shield with heart + family silhouettes.
-Colors: Indigo-to-teal gradient, white shield, purple accents.
+Design v5: Vibrant gradient bg, white location-pin with heart + family.
 """
 from PIL import Image, ImageDraw
 import math, os
@@ -16,105 +14,101 @@ def gradient_bg(size):
     img = Image.new('RGBA', (size, size))
     draw = ImageDraw.Draw(img)
     for y in range(size):
-        t = y / size
-        r = int(lerp(90, 0, t))
-        g = int(lerp(70, 185, t))
-        b = int(lerp(225, 155, t))
-        draw.line([(0, y), (size, y)], fill=(r, g, b, 255))
+        for x in range(size):
+            t = (x / size * 0.35 + y / size * 0.65)
+            r = int(lerp(76, 0, t))
+            g = int(lerp(40, 195, t))
+            b_val = int(lerp(220, 145, t))
+            draw.point((x, y), fill=(r, g, b_val, 255))
     return img
 
-def shield_polygon(cx, cy, w, h):
-    """Symmetric shield: rounded-top rectangle tapering to a point at bottom."""
+def pin_shape(cx, cy, w, h):
+    """Location pin: circle-ish top + pointed bottom."""
     pts = []
-    top = cy - h
-    bot_point = cy + h * 0.75
-    waist_y = cy + h * 0.2
-    corner_r = w * 0.3
-
-    # Top-left corner arc (180° to 270°)
+    # Top dome (semicircle)
+    dome_cy = cy - h * 0.15
+    dome_r = w * 0.50
+    for i in range(60):
+        a = math.pi + i / 59 * math.pi
+        pts.append((cx + dome_r * math.cos(a), dome_cy + dome_r * math.sin(a)))
+    # Right side curves down to point
     for i in range(30):
-        a = math.pi + i / 29 * (math.pi / 2)
-        pts.append((cx - w + corner_r + corner_r * math.cos(a),
-                     top + corner_r + corner_r * math.sin(a)))
-    # Top-right corner arc (270° to 360°)
+        t = i / 29
+        rx = cx + dome_r * (1 - t) * math.cos(-0.1)
+        ry = dome_cy + dome_r * t * 1.1
+        pts.append((cx + dome_r * (1 - t * 1.05), dome_cy + t * h * 0.62))
+    # Bottom point
+    pts.append((cx, cy + h * 0.50))
+    # Left side curves back up
     for i in range(30):
-        a = 3 * math.pi / 2 + i / 29 * (math.pi / 2)
-        pts.append((cx + w - corner_r + corner_r * math.cos(a),
-                     top + corner_r + corner_r * math.sin(a)))
-    # Right side down to waist
-    pts.append((cx + w, waist_y))
-    # Right taper to bottom point
-    pts.append((cx, bot_point))
-    # Left taper from bottom point
-    pts.append((cx - w, waist_y))
-
+        t = (29 - i) / 29
+        pts.append((cx - dome_r * (1 - t * 1.05), dome_cy + t * h * 0.62))
     return pts
 
-def heart_polygon(cx, cy, size, steps=250):
+def draw_heart(draw, cx, cy, sz, color):
     pts = []
-    for i in range(steps):
-        t = i / steps * 2 * math.pi
-        x = size * 16 * math.sin(t) ** 3
-        y = -size * (13 * math.cos(t) - 5 * math.cos(2 * t) -
-                     2 * math.cos(3 * t) - math.cos(4 * t))
+    for i in range(300):
+        t = i / 300 * 2 * math.pi
+        x = sz * 16 * math.sin(t) ** 3
+        y = -sz * (13*math.cos(t)-5*math.cos(2*t)-2*math.cos(3*t)-math.cos(4*t))
         pts.append((cx + x / 16, cy + y / 16))
-    return pts
+    draw.polygon(pts, fill=color)
 
-def draw_person(draw, px, py, scale=1.0, color=(108, 99, 255)):
-    hr = int(20 * scale)
-    draw.ellipse([px - hr, py - hr, px + hr, py + hr], fill=color)
-    bw, bh = int(18 * scale), int(38 * scale)
-    draw.rounded_rectangle(
-        [px - bw, py + hr + 3, px + bw, py + hr + 3 + bh],
-        radius=int(9 * scale), fill=color)
+def draw_person(draw, cx, cy, hr, bw, bh, color):
+    draw.ellipse([cx-hr, cy-hr, cx+hr, cy+hr], fill=color)
+    draw.rounded_rectangle([cx-bw, cy+hr+3, cx+bw, cy+hr+3+bh], radius=bw//2, fill=color)
 
-# ===== BUILD ICON =====
 os.makedirs('assets/icon', exist_ok=True)
 img = gradient_bg(SIZE)
-
-# Rounded rect mask
 mask = Image.new('L', (SIZE, SIZE), 0)
-ImageDraw.Draw(mask).rounded_rectangle(
-    [(0, 0), (SIZE - 1, SIZE - 1)], radius=int(SIZE * 0.22), fill=255)
+ImageDraw.Draw(mask).rounded_rectangle([(0,0),(SIZE-1,SIZE-1)], radius=int(SIZE*0.22), fill=255)
 img.putalpha(mask)
 draw = ImageDraw.Draw(img)
 
-# Shield
-cx, cy = HALF, HALF - 15
-shield = shield_polygon(cx, cy, 285, 330)
+# Central pin
+pcx, pcy = HALF, HALF + 20
+pw, ph = 500, 660
+pin = pin_shape(pcx, pcy, pw, ph)
+# Shadow
+shadow = [(p[0]+6, p[1]+10) for p in pin]
+draw.polygon(shadow, fill=(0, 0, 0, 40))
+draw.polygon(pin, fill=(255, 255, 255, 245))
 
-# Drop shadow
-shadow = [(p[0] + 6, p[1] + 8) for p in shield]
-draw.polygon(shadow, fill=(0, 0, 0, 45))
-draw.polygon(shield, fill=(255, 255, 255, 245))
+# Inner circle highlight (subtle)
+inner_cy = pcy - ph * 0.15
+inner_r = pw * 0.35
+draw.ellipse([pcx - inner_r, inner_cy - inner_r, pcx + inner_r, inner_cy + inner_r],
+             fill=(245, 245, 255, 60))
 
-# Heart (upper portion of shield)
-heart = heart_polygon(cx, cy - 50, 105)
-draw.polygon(heart, fill=(108, 99, 255))
+# Heart in upper area
+hcy = pcy - ph * 0.18
+draw_heart(draw, pcx, hcy, 80, (108, 95, 230))
 
-# Location dot in heart
-dot_r = 18
-draw.ellipse([cx - dot_r, cy - 96 - dot_r, cx + dot_r, cy - 96 + dot_r],
-             fill=(255, 255, 255, 235))
+# White dot in heart
+dr = 13
+draw.ellipse([pcx-dr, hcy-32-dr, pcx+dr, hcy-32+dr], fill=(255,255,255,230))
 
-# Family figures (lower shield)
-fy = cy + 130
-draw_person(draw, cx - 65, fy, scale=0.95, color=(108, 99, 255))
-draw_person(draw, cx, fy + 15, scale=0.68, color=(140, 130, 255))
-draw_person(draw, cx + 65, fy, scale=0.95, color=(108, 99, 255))
+# Family figures in lower area
+fy = pcy + ph * 0.06
+fc = (108, 95, 230)
+fc2 = (145, 135, 240)
+draw_person(draw, pcx - 68, fy, 20, 17, 36, fc)
+draw_person(draw, pcx, fy + 12, 15, 13, 28, fc2)
+draw_person(draw, pcx + 68, fy, 20, 17, 36, fc)
 
-img.save('assets/icon/app_icon.png', 'PNG')
+img.save('assets/icon/app_icon.png')
+print('OK app_icon.png')
 
-# ===== ADAPTIVE FOREGROUND =====
-fg = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+# Foreground for adaptive icon
+fg = Image.new('RGBA', (SIZE, SIZE), (0,0,0,0))
 fd = ImageDraw.Draw(fg)
-fd.polygon(shield, fill=(255, 255, 255, 245))
-fd.polygon(heart, fill=(108, 99, 255))
-fd.ellipse([cx - dot_r, cy - 96 - dot_r, cx + dot_r, cy - 96 + dot_r],
-           fill=(255, 255, 255, 235))
-draw_person(fd, cx - 65, fy, scale=0.95, color=(108, 99, 255))
-draw_person(fd, cx, fy + 15, scale=0.68, color=(140, 130, 255))
-draw_person(fd, cx + 65, fy, scale=0.95, color=(108, 99, 255))
-fg.save('assets/icon/app_icon_foreground.png', 'PNG')
-
-print("Done: app_icon.png + app_icon_foreground.png (1024x1024)")
+pin2 = pin_shape(HALF, HALF+20, pw, ph)
+fd.polygon(pin2, fill=(255,255,255,245))
+fd.ellipse([HALF-inner_r, inner_cy-inner_r, HALF+inner_r, inner_cy+inner_r], fill=(245,245,255,60))
+draw_heart(fd, HALF, hcy, 80, (108,95,230))
+fd.ellipse([HALF-dr, hcy-32-dr, HALF+dr, hcy-32+dr], fill=(255,255,255,230))
+draw_person(fd, HALF-68, fy, 20, 17, 36, fc)
+draw_person(fd, HALF, fy+12, 15, 13, 28, fc2)
+draw_person(fd, HALF+68, fy, 20, 17, 36, fc)
+fg.save('assets/icon/app_icon_foreground.png')
+print('OK foreground.png')

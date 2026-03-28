@@ -28,7 +28,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (familyId == null) {
       return Scaffold(
         appBar: AppBar(title: Text(t('transactions'))),
-        body: const Center(child: Text('No family')),
+        body: Center(child: Text(t('no_family'))),
       );
     }
 

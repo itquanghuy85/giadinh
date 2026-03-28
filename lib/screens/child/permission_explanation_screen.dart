@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common_widgets.dart';
@@ -24,42 +25,31 @@ class _PermissionExplanationScreenState
   bool _bgLocationGranted = false;
   bool _notificationGranted = false;
 
-  final List<_PermissionStep> _steps = [
-    _PermissionStep(
-      icon: Icons.location_on,
-      title: 'Location Access',
-      description:
-          'We need location access to share your position with your family. '
-          'This helps your parents know you are safe.',
-      detail:
-          'Your location is only shared with your family members. '
-          'We never sell or share your data with third parties.',
-      color: AppTheme.primaryColor,
-    ),
-    _PermissionStep(
-      icon: Icons.location_searching,
-      title: 'Background Location',
-      description:
-          'To keep your family updated, we need to access your location '
-          'even when the app is in the background.',
-      detail:
-          'A notification will always be shown when location sharing is active. '
-          'You can pause sharing at any time. '
-          'This is required by Google Play policy for transparency.',
-      color: AppTheme.accentColor,
-    ),
-    _PermissionStep(
-      icon: Icons.notifications_active,
-      title: 'Notifications',
-      description:
-          'Notifications are used for SOS alerts, geofence alerts, '
-          'and showing the location sharing status.',
-      detail:
-          'You will receive important safety alerts from your family. '
-          'A persistent notification shows when location sharing is active.',
-      color: AppTheme.warningColor,
-    ),
-  ];
+  List<_PermissionStep> _buildSteps(String Function(String, [List<String>?]) t) {
+    return [
+      _PermissionStep(
+        icon: Icons.location_on,
+        title: t('location_access'),
+        description: t('location_access_desc'),
+        detail: t('location_access_detail'),
+        color: AppTheme.primaryColor,
+      ),
+      _PermissionStep(
+        icon: Icons.location_searching,
+        title: t('bg_location'),
+        description: t('bg_location_desc'),
+        detail: t('bg_location_detail'),
+        color: AppTheme.accentColor,
+      ),
+      _PermissionStep(
+        icon: Icons.notifications_active,
+        title: t('notifications'),
+        description: t('notifications_desc'),
+        detail: t('notifications_detail'),
+        color: AppTheme.warningColor,
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -78,7 +68,9 @@ class _PermissionExplanationScreenState
 
   @override
   Widget build(BuildContext context) {
-    final step = _steps[_currentStep];
+    final t = AppLocalizations.of(context).t;
+    final steps = _buildSteps(t);
+    final step = steps[_currentStep];
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -90,7 +82,7 @@ class _PermissionExplanationScreenState
               // Progress
               Row(
                 children: List.generate(
-                  _steps.length,
+                  steps.length,
                   (i) => Expanded(
                     child: Container(
                       height: 4,
@@ -191,7 +183,7 @@ class _PermissionExplanationScreenState
                   onPressed: () {
                     setState(() => _currentStep--);
                   },
-                  child: const Text('Back'),
+                  child: Text(t('back')),
                 ),
 
               const SizedBox(height: 8),
@@ -203,19 +195,20 @@ class _PermissionExplanationScreenState
   }
 
   String _getButtonText() {
+    final t = AppLocalizations.of(context).t;
     switch (_currentStep) {
       case 0:
-        return _locationGranted ? 'Already Granted - Next' : 'Allow Location';
+        return _locationGranted ? t('already_granted') : t('allow_location');
       case 1:
         return _bgLocationGranted
-            ? 'Already Granted - Next'
-            : 'Allow Background Location';
+            ? t('already_granted')
+            : t('allow_bg_location');
       case 2:
         return _notificationGranted
-            ? 'Already Granted - Continue'
-            : 'Allow Notifications';
+            ? t('already_granted_continue')
+            : t('allow_notifications');
       default:
-        return 'Continue';
+        return t('continue_btn');
     }
   }
 

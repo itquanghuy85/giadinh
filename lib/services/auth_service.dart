@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -10,6 +11,11 @@ class AuthService {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      // Disconnect any previous session to ensure the account picker shows
+      try {
+        await _googleSignIn.disconnect();
+      } catch (_) {}
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
@@ -23,6 +29,7 @@ class AuthService {
 
       return await _auth.signInWithCredential(credential);
     } catch (e) {
+      debugPrint('Google Sign-In error: $e');
       rethrow;
     }
   }

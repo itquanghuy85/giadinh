@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
@@ -26,11 +27,12 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final t = AppLocalizations.of(context).t;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Join Family'),
+        title: Text(t('join_family')),
       ),
       body: SafeArea(
         child: Padding(
@@ -59,14 +61,14 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Join your Family',
+                  t('join_family_title'),
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
 
                 const SizedBox(height: 8),
 
                 Text(
-                  'Enter the family code your parent shared with you to join the family group.',
+                  t('join_family_desc'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
 
@@ -75,10 +77,10 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                 // Family Code Input
                 TextFormField(
                   controller: _codeController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter 6-digit family code',
+                  decoration: InputDecoration(
+                    hintText: t('enter_code'),
                     prefixIcon:
-                        Icon(Icons.vpn_key, color: AppTheme.accentColor),
+                        const Icon(Icons.vpn_key, color: AppTheme.accentColor),
                   ),
                   textCapitalization: TextCapitalization.characters,
                   maxLength: 6,
@@ -90,7 +92,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                   textAlign: TextAlign.center,
                   validator: (value) {
                     if (value == null || value.trim().length != 6) {
-                      return 'Please enter a valid 6-digit code';
+                      return t('invalid_code');
                     }
                     return null;
                   },
@@ -118,9 +120,9 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                       borderRadius:
                           BorderRadius.circular(AppTheme.radiusMedium),
                     ),
-                    title: const Text(
-                      'I agree to share my location with my family for safety purposes',
-                      style: TextStyle(fontSize: 13),
+                    title: Text(
+                      t('consent_text'),
+                      style: const TextStyle(fontSize: 13),
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding:
@@ -142,7 +144,7 @@ class _JoinFamilyScreenState extends State<JoinFamilyScreen> {
                 const Spacer(),
 
                 GradientButton(
-                  text: 'Join Family',
+                  text: t('join_family'),
                   icon: Icons.arrow_forward,
                   isLoading: auth.isLoading,
                   gradient: const LinearGradient(

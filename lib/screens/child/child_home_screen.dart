@@ -93,6 +93,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
     final auth = context.watch<AuthProvider>();
     final locationProv = context.watch<LocationProvider>();
     final user = auth.currentUser;
+    final t = AppLocalizations.of(context).t;
 
     if (!_permissionsGranted) {
       return PermissionExplanationScreen(
@@ -149,7 +150,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hi, ${user?.displayName ?? 'there'}!',
+                          t('hi_user', [user?.displayName ?? 'there']),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -181,14 +182,14 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                       }
                     },
                     itemBuilder: (ctx) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'signout',
                         child: Row(
                           children: [
-                            Icon(Icons.logout,
+                            const Icon(Icons.logout,
                                 color: AppTheme.errorColor, size: 20),
-                            SizedBox(width: 8),
-                            Text('Sign Out'),
+                            const SizedBox(width: 8),
+                            Text(t('sign_out')),
                           ],
                         ),
                       ),
@@ -235,8 +236,8 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                     const SizedBox(height: 12),
                     Text(
                       locationProv.isTracking
-                          ? 'Location Sharing Active'
-                          : 'Location Sharing Paused',
+                          ? t('location_sharing_active')
+                          : t('location_sharing_paused'),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -246,8 +247,8 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                     const SizedBox(height: 4),
                     Text(
                       locationProv.isTracking
-                          ? 'Your family can see your location'
-                          : 'Your family cannot see your location',
+                          ? t('family_can_see')
+                          : t('family_cannot_see'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 14,
@@ -278,8 +279,8 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                         ),
                         child: Text(
                           locationProv.isTracking
-                              ? 'Pause Sharing'
-                              : 'Start Sharing',
+                              ? t('pause_sharing')
+                              : t('start_sharing'),
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -298,8 +299,8 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                 children: [
                   Expanded(
                     child: InfoCard(
-                      title: 'Status',
-                      value: locationProv.isTracking ? 'Active' : 'Paused',
+                      title: t('status'),
+                      value: locationProv.isTracking ? t('active') : t('paused'),
                       icon: locationProv.isTracking
                           ? Icons.check_circle
                           : Icons.pause_circle,
@@ -311,7 +312,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: InfoCard(
-                      title: 'Battery',
+                      title: t('battery'),
                       value:
                           '${(locationProv.currentLocation?.batteryLevel ?? user?.batteryLevel ?? 100).toInt()}%',
                       icon: Icons.battery_full,
@@ -331,7 +332,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
               const SizedBox(height: 16),
 
               Text(
-                'Press and hold for emergency SOS',
+                t('sos_hold'),
                 style: TextStyle(
                   color: AppTheme.textHint,
                   fontSize: 13,
@@ -351,6 +352,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
     final auth = context.read<AuthProvider>();
     final sosProv = context.read<SosProvider>();
     final user = auth.currentUser!;
+    final t = AppLocalizations.of(context).t;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -362,23 +364,23 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
           children: [
             const Icon(Icons.warning, color: AppTheme.sosColor, size: 28),
             const SizedBox(width: 8),
-            const Text('Send SOS?'),
+            Text(t('send_sos')),
           ],
         ),
-        content: const Text(
-          'This will immediately alert your parents with your current location. Use only in emergencies.',
+        content: Text(
+          t('send_sos_desc'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(t('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.sosColor,
             ),
-            child: const Text('SEND SOS'),
+            child: Text(t('send_sos_btn')),
           ),
         ],
       ),
@@ -397,8 +399,8 @@ class _ChildHomeScreenState extends State<ChildHomeScreen>
         SnackBar(
           content: Text(
             success
-                ? 'SOS alert sent to your parents!'
-                : 'Failed to send SOS. Try again.',
+                ? t('sos_sent')
+                : t('sos_failed'),
           ),
           backgroundColor:
               success ? AppTheme.successColor : AppTheme.errorColor,

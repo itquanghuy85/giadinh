@@ -172,7 +172,7 @@ class _ContentFilterScreenState extends State<ContentFilterScreen> {
               _SectionCard(
                 icon: Icons.play_circle_fill,
                 color: const Color(0xFFFF0000),
-                title: 'YouTube',
+                title: t('youtube'),
                 children: [
                   SwitchListTile(
                     title: Text(t('youtube_restricted')),

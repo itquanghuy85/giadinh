@@ -25,6 +25,47 @@ class LoginScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               children: [
+                // Language toggle at top
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Consumer<LocaleProvider>(
+                    builder: (context, localeProv, _) {
+                      final isVi = localeProv.locale.languageCode == 'vi';
+                      return GestureDetector(
+                        onTap: () => localeProv.toggleLanguage(),
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.language,
+                                  color: Colors.white, size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                isVi ? '🇻🇳 Tiếng Việt' : '🇺🇸 English',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
                 const Spacer(flex: 2),
 
                 // Logo / Icon

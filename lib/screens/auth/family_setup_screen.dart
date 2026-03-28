@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
@@ -25,11 +26,12 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final t = AppLocalizations.of(context).t;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Create Family'),
+        title: Text(t('create_family')),
       ),
       body: SafeArea(
         child: Padding(
@@ -59,14 +61,14 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Create your Family Group',
+                  t('create_family_group'),
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
 
                 const SizedBox(height: 8),
 
                 Text(
-                  'Give your family group a name. You\'ll receive a unique code to share with your children.',
+                  t('create_family_desc'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
 
@@ -75,15 +77,15 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
                 // Family Name Input
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    hintText: 'Family name (e.g. "The Smiths")',
+                  decoration: InputDecoration(
+                    hintText: t('family_name_hint'),
                     prefixIcon:
-                        Icon(Icons.group, color: AppTheme.primaryColor),
+                        const Icon(Icons.group, color: AppTheme.primaryColor),
                   ),
                   textCapitalization: TextCapitalization.words,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a family name';
+                      return t('family_name_required');
                     }
                     return null;
                   },
@@ -103,7 +105,7 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
                 const Spacer(),
 
                 GradientButton(
-                  text: 'Create Family',
+                  text: t('create_family'),
                   icon: Icons.arrow_forward,
                   isLoading: auth.isLoading,
                   onPressed: () => _createFamily(auth),
@@ -127,6 +129,7 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
 
     if (auth.hasFamily) {
       // Show family code dialog
+      final t = AppLocalizations.of(context).t;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -134,12 +137,12 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
-          title: const Text('Family Created! 🎉'),
+          title: Text(t('family_created')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Share this code with your children to join:',
+              Text(
+                t('share_code_msg'),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -163,7 +166,7 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Keep this code safe!',
+                t('keep_code_safe'),
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 13,
@@ -183,7 +186,7 @@ class _FamilySetupScreenState extends State<FamilySetupScreen> {
                     (route) => false,
                   );
                 },
-                child: const Text('Continue'),
+                child: Text(t('continue_btn')),
               ),
             ),
           ],

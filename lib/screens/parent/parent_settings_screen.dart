@@ -80,7 +80,7 @@ class ParentSettingsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.displayName ?? 'User',
+                            user?.displayName ?? t('default_user'),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -103,9 +103,9 @@ class ParentSettingsScreen extends StatelessWidget {
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
-                              'Parent',
-                              style: TextStyle(
+                            child: Text(
+                              t('parent'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -127,12 +127,12 @@ class ParentSettingsScreen extends StatelessWidget {
                 children: [
                   _SettingsTile(
                     icon: Icons.family_restroom,
-                    title: family?.name ?? 'No Family',
+                    title: family?.name ?? t('no_family'),
                     subtitle: t('family_name'),
                   ),
                   _SettingsTile(
                     icon: Icons.vpn_key,
-                    title: family?.code ?? 'N/A',
+                    title: family?.code ?? t('na'),
                     subtitle: t('family_code_label'),
                     trailing: IconButton(
                       icon: const Icon(Icons.copy, size: 18),

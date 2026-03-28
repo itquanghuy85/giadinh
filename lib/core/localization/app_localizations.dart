@@ -698,6 +698,15 @@ class AppLocalizations {
       'add_child': 'Add Child',
       'children_list': 'Children',
       'share_code_to_add': 'Share family code to add children',
+
+      // ─── MISC ───
+      'no_family': 'No family',
+      'youtube': 'YouTube',
+      'default_user': 'User',
+      'na': 'N/A',
+      'pdf_area': 'Area',
+      'pdf_time': 'Time',
+      'sos_coordinates': 'Lat: {}, Lng: {}',
     },
 
     'vi': {
@@ -1385,6 +1394,15 @@ class AppLocalizations {
       'add_child': 'Thêm con',
       'children_list': 'Danh sách con',
       'share_code_to_add': 'Chia sẻ mã gia đình để thêm con',
+
+      // ─── KHÁC ───
+      'no_family': 'Chưa có gia đình',
+      'youtube': 'YouTube',
+      'default_user': 'Người dùng',
+      'na': 'N/A',
+      'pdf_area': 'Khu vực',
+      'pdf_time': 'Thời gian',
+      'sos_coordinates': 'Vĩ độ: {}, Kinh độ: {}',
     },
   };
 
