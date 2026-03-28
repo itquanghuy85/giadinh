@@ -83,6 +83,25 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Family Safety needs background location access to share your real-time position with your family.</string>
 
+	<!-- Google Sign-In URL Scheme -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1043819133314-2mvos5negohqtlonjlbq2ja1c0m0g3it</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Background Task Scheduler -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>dev.flutter.background.refresh</string>
+	</array>
+
 	<!-- Firebase Messaging -->
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
