@@ -59,10 +59,17 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _loadUserData(String uid) async {
     try {
-      _currentUser = await _firestoreService.getUser(uid);
-      if (_currentUser?.familyId != null) {
-        _currentFamily =
-            await _firestoreService.getFamily(_currentUser!.familyId!);
+      final loaded = await _firestoreService.getUser(uid);
+      if (loaded != null) {
+        _currentUser = loaded;
+        if (loaded.familyId != null) {
+          _currentFamily =
+              await _firestoreService.getFamily(loaded.familyId!);
+        }
+      } else if (_currentUser?.uid != uid) {
+        // Only clear if the signed-in user doesn't already match
+        _currentUser = null;
+        _currentFamily = null;
       }
     } catch (e) {
       debugPrint('Failed to load user data: $e');
@@ -90,13 +97,19 @@ class AuthProvider extends ChangeNotifier {
       final existingUser = await _firestoreService.getUser(user.uid);
 
       if (existingUser == null) {
+        final fcmToken = await _notificationService.getToken();
         _currentUser = AppUser(
           uid: user.uid,
           email: user.email ?? '',
           displayName: user.displayName ?? '',
           photoUrl: user.photoURL,
           role: UserRole.parent,
+          isOnline: true,
+          lastActive: DateTime.now(),
+          fcmToken: fcmToken,
         );
+        // Save immediately so the auth-state listener won't null out _currentUser
+        await _firestoreService.createUser(_currentUser!);
       } else {
         _currentUser = existingUser;
         if (existingUser.familyId != null) {
@@ -138,13 +151,19 @@ class AuthProvider extends ChangeNotifier {
       final existingUser = await _firestoreService.getUser(user.uid);
 
       if (existingUser == null) {
+        final fcmToken = await _notificationService.getToken();
         _currentUser = AppUser(
           uid: user.uid,
           email: user.email ?? '',
           displayName: user.displayName ?? '',
           photoUrl: user.photoURL,
           role: UserRole.parent,
+          isOnline: true,
+          lastActive: DateTime.now(),
+          fcmToken: fcmToken,
         );
+        // Save immediately so the auth-state listener won't null out _currentUser
+        await _firestoreService.createUser(_currentUser!);
       } else {
         _currentUser = existingUser;
         if (existingUser.familyId != null) {
