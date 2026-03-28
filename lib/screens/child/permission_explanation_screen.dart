@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/permission_service.dart';
@@ -216,8 +217,13 @@ class _PermissionExplanationScreenState
     switch (_currentStep) {
       case 0:
         if (!_locationGranted) {
-          _locationGranted =
-              await _permissionService.requestLocationPermission();
+          final status = await Permission.location.request();
+          _locationGranted = status.isGranted;
+          if (status.isPermanentlyDenied) {
+            await _showSettingsDialog();
+            // Re-check after returning from settings
+            _locationGranted = await Permission.location.isGranted;
+          }
         }
         if (_locationGranted) {
           setState(() => _currentStep = 1);
@@ -225,8 +231,12 @@ class _PermissionExplanationScreenState
         break;
       case 1:
         if (!_bgLocationGranted) {
-          _bgLocationGranted =
-              await _permissionService.requestBackgroundLocationPermission();
+          final status = await Permission.locationAlways.request();
+          _bgLocationGranted = status.isGranted;
+          if (status.isPermanentlyDenied) {
+            await _showSettingsDialog();
+            _bgLocationGranted = await Permission.locationAlways.isGranted;
+          }
         }
         if (_bgLocationGranted || _locationGranted) {
           setState(() => _currentStep = 2);
@@ -234,11 +244,39 @@ class _PermissionExplanationScreenState
         break;
       case 2:
         if (!_notificationGranted) {
-          _notificationGranted =
-              await _permissionService.requestNotificationPermission();
+          final status = await Permission.notification.request();
+          _notificationGranted = status.isGranted;
+          if (status.isPermanentlyDenied) {
+            await _showSettingsDialog();
+            _notificationGranted = await Permission.notification.isGranted;
+          }
         }
         widget.onPermissionsGranted();
         break;
+    }
+  }
+
+  Future<void> _showSettingsDialog() async {
+    final t = AppLocalizations.of(context).t;
+    final opened = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('permission_required')),
+        content: Text(t('permission_denied_msg')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t('open_settings')),
+          ),
+        ],
+      ),
+    );
+    if (opened == true) {
+      await openAppSettings();
     }
   }
 }
