@@ -5,7 +5,7 @@ import FirebaseMessaging
 import UserNotifications
 
 @main
-@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
+@objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -20,6 +20,8 @@ import UserNotifications
 
     Messaging.messaging().delegate = self
 
+    GeneratedPluginRegistrant.register(with: self)
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -31,7 +33,7 @@ import UserNotifications
   }
 
   // Handle foreground notifications
-  func userNotificationCenter(_ center: UNUserNotificationCenter,
+  override func userNotificationCenter(_ center: UNUserNotificationCenter,
                               willPresent notification: UNNotification,
                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
     completionHandler([.alert, .badge, .sound])
@@ -40,9 +42,5 @@ import UserNotifications
   // FCM token
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
     // Token will be handled by flutter_firebase_messaging plugin
-  }
-
-  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
-    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
   }
 }
