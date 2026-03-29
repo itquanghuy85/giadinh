@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,14 +22,17 @@ import 'screens/child/child_home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (critical – must succeed)
-  // On iOS: Firebase auto-reads GoogleService-Info.plist from the app bundle.
-  // On Android: pass explicit options from firebase_options.dart.
-  await Firebase.initializeApp(
-    options: defaultTargetPlatform == TargetPlatform.iOS
-        ? null
-        : DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase.
+  // On iOS, AppDelegate.swift already called FirebaseApp.configure() natively
+  // from GoogleService-Info.plist — just attach to that existing app.
+  // On Android, pass Dart-side options from google-services.json.
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    await Firebase.initializeApp();
+  } else {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
 
   // Enable Firestore offline persistence – data is cached locally and
   // automatically synced when the device comes back online.
