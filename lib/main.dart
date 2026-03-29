@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,8 +23,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase (critical – must succeed)
+  // On iOS: Firebase auto-reads GoogleService-Info.plist from the app bundle.
+  // On Android: pass explicit options from firebase_options.dart.
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: defaultTargetPlatform == TargetPlatform.iOS
+        ? null
+        : DefaultFirebaseOptions.currentPlatform,
   );
 
   // Enable Firestore offline persistence – data is cached locally and
