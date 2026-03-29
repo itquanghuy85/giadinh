@@ -15,3 +15,11 @@
 
 # Keep background service
 -keep class id.flutter.flutter_background_service.** { *; }
+
+# Play Core (deferred components / dynamic delivery) - suppress R8 missing class errors
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+-keep class com.google.android.play.core.splitcompat.** { *; }
+-keep class com.google.android.play.core.splitinstall.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
