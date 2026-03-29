@@ -39,6 +39,16 @@ class AuthProvider extends ChangeNotifier {
       if (_isSigningIn) return;
 
       if (user != null) {
+        // If we already loaded data for this user (e.g. right after sign-in),
+        // skip re-fetching from Firestore to avoid a race condition that would
+        // wipe _currentUser if the fetch fails or is slow.
+        if (_currentUser?.uid == user.uid) {
+          if (_isLoading) {
+            _isLoading = false;
+            notifyListeners();
+          }
+          return;
+        }
         await _loadUserData(user.uid);
       } else {
         _currentUser = null;
@@ -67,16 +77,17 @@ class AuthProvider extends ChangeNotifier {
               await _firestoreService.getFamily(loaded.familyId!);
         }
       } else {
-        // User exists in Firebase Auth but not in Firestore.
-        // Sign them out so they can re-sign-in properly.
-        await _authService.signOut();
+        // User exists in Firebase Auth but not yet in Firestore
+        // (e.g. first sign-in, Firestore write hasn't propagated yet).
+        // Do NOT sign out — just clear local state and show login screen.
         _currentUser = null;
         _currentFamily = null;
       }
     } catch (e) {
+      // Firestore error (network, permissions, etc.).
+      // Keep existing _currentUser so we don't kick a signed-in user
+      // back to the login screen on a transient failure.
       debugPrint('Failed to load user data: $e');
-      _currentUser = null;
-      _currentFamily = null;
     }
     _isLoading = false;
     notifyListeners();
