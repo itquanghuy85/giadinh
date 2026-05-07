@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Secret keys (do not commit)
+/android/local.properties
+/ios/Flutter/Secrets.xcconfig
+
 # Generated files
 generate_icon.dart
 *.g.dart

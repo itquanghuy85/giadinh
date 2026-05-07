@@ -7,8 +7,19 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+val localProperties = java.util.Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+val mapsApiKey: String = (localProperties.getProperty("MAPS_API_KEY")
+    ?: (project.findProperty("MAPS_API_KEY") as String?)
+    ?: "MISSING_MAPS_API_KEY")
+
 android {
-    namespace = "com.huluca.giadinh"
+    namespace = "com.huluca.family"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,12 +34,13 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.huluca.giadinh"
+        applicationId = "com.huluca.family"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {

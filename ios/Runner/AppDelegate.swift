@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import Firebase
 import FirebaseMessaging
+import GoogleMaps
 import UserNotifications
 
 @main
@@ -11,6 +12,11 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     FirebaseApp.configure()
+
+    if let mapsApiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String,
+       !mapsApiKey.isEmpty {
+      GMSServices.provideAPIKey(mapsApiKey)
+    }
 
     // Push Notification
     UNUserNotificationCenter.current().delegate = self
