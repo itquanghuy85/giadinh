@@ -1,0 +1,12 @@
+{
+  "name": "family-finance-seed",
+  "version": "1.0.0",
+  "description": "Seed script for Family Finance app",
+  "main": "seed_data.js",
+  "scripts": {
+    "seed": "node seed_data.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

@@ -2,200 +2,191 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── HELPER FUNCTIONS ───
-
-    // Check if user is authenticated
-    function isAuthenticated() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    // Check if the user is the document owner
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function myUid() {
+      return request.auth.uid;
     }
 
-    // Get user document
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    // Lấy role của user trong family
+    function memberDoc(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId)/members/$(myUid())).data;
     }
 
-    // Check if user belongs to a family
-    function belongsToFamily(familyId) {
-      return isAuthenticated() && getUserData().familyId == familyId;
+    function isFamilyMember(familyId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/families/$(familyId)/members/$(myUid()));
     }
 
-    // Check if user is a parent in the family
-    function isParentInFamily(familyId) {
-      return belongsToFamily(familyId) && getUserData().role == 'parent';
+    function isAdminOf(familyId) {
+      return isFamilyMember(familyId) &&
+        (memberDoc(familyId).role == 'fatherAdmin' || memberDoc(familyId).role == 'admin');
     }
 
-    // ─── USERS COLLECTION ───
-    match /users/{userId} {
-      // Users can read their own data
-      // Family members can read each other's data
-      allow read: if isAuthenticated() && (
-        isOwner(userId) ||
-        belongsToFamily(resource.data.familyId)
-      );
-
-      // Users can create their own profile
-      allow create: if isAuthenticated() && isOwner(userId);
-
-      // Users can update their own profile
-      allow update: if isAuthenticated() && isOwner(userId);
-
-      // Only the user themselves can delete their profile
-      allow delete: if isAuthenticated() && isOwner(userId);
+    function isManagerOf(familyId) {
+      return isFamilyMember(familyId) &&
+        (memberDoc(familyId).role == 'motherManager' || memberDoc(familyId).role == 'manager');
     }
 
-    // ─── FAMILIES COLLECTION ───
+    function isAdminOrManagerOf(familyId) {
+      return isAdminOf(familyId) || isManagerOf(familyId);
+    }
+
+    function isChildOf(familyId) {
+      return isFamilyMember(familyId) &&
+        (memberDoc(familyId).role == 'childLimited' || memberDoc(familyId).role == 'child');
+    }
+
+    function canBootstrapFamily(familyId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(myUid())) &&
+        get(/databases/$(database)/documents/users/$(myUid())).data.familyId == familyId;
+    }
+
+    function canBootstrapSelfMember(familyId, memberId) {
+      return canBootstrapFamily(familyId) &&
+        memberId == myUid() &&
+        !exists(/databases/$(database)/documents/families/$(familyId)/members/$(myUid())) &&
+        request.resource.data.uid == myUid();
+    }
+
+    // ──────────── Users ────────────
+    match /users/{uid} {
+      allow read: if signedIn() && myUid() == uid;
+      allow write: if signedIn() && myUid() == uid;
+    }
+
+    // ──────────── Family root ────────────
     match /families/{familyId} {
-      // Family members can read family data
-      allow read: if isAuthenticated() && (
-        belongsToFamily(familyId) ||
-        // Allow reading by family code (for joining)
-        resource.data.code == request.resource.data.code
-      );
-
-      // Any authenticated user can query families by code (for joining)
-      allow list: if isAuthenticated();
-
-      // Authenticated users can create families
-      allow create: if isAuthenticated() &&
-        request.resource.data.createdBy == request.auth.uid;
-
-      // Only parents can update family data
-      allow update: if isAuthenticated() && isParentInFamily(familyId);
-
-      // Only the creator can delete the family
-      allow delete: if isAuthenticated() &&
-        resource.data.createdBy == request.auth.uid;
+      allow read: if isFamilyMember(familyId);
+      allow create: if canBootstrapFamily(familyId) && request.resource.data.ownerUid == myUid();
+      allow update, delete: if isAdminOf(familyId);
     }
 
-    // ─── LOCATIONS COLLECTION ───
-    match /locations/{userId} {
-      // Family members can read location data
-      allow read: if isAuthenticated() && (
-        isOwner(userId) ||
-        belongsToFamily(resource.data.familyId) ||
-        // Allow if the target user is in the same family
-        belongsToFamily(get(/databases/$(database)/documents/users/$(userId)).data.familyId)
-      );
+    // ──────────── Wallets: chỉ chủ sở hữu ────────────
+    match /users/{uid}/wallets/{walletId} {
+      allow read, write: if signedIn() && myUid() == uid;
+      // Admin/Manager của cùng family được đọc ví thành viên
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/users/$(uid)) &&
+        isAdminOrManagerOf(get(/databases/$(database)/documents/users/$(uid)).data.familyId);
+    }
 
-      // Only the user can write their own location
-      allow write: if isAuthenticated() && isOwner(userId);
+    // ──────────── Transactions: chủ sở hữu + admin/manager ────────────
+    match /users/{uid}/transactions/{txId} {
+      allow read, write: if signedIn() && myUid() == uid;
+      // Admin/Manager đọc giao dịch thành viên
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/users/$(uid)) &&
+        isAdminOrManagerOf(get(/databases/$(database)/documents/users/$(uid)).data.familyId);
+      // Admin xóa bất kỳ; Manager chỉ xóa của mình
+      allow delete: if signedIn() && myUid() == uid;
+      allow delete: if signedIn() &&
+        exists(/databases/$(database)/documents/users/$(uid)) &&
+        isAdminOf(get(/databases/$(database)/documents/users/$(uid)).data.familyId);
+    }
 
-      // Location history subcollection
-      match /history/{historyId} {
-        allow read: if isAuthenticated() && (
-          isOwner(userId) ||
-          belongsToFamily(get(/databases/$(database)/documents/users/$(userId)).data.familyId)
+    // ──────────── Family members ────────────
+    match /families/{familyId}/members/{memberId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isAdminOf(familyId) || canBootstrapSelfMember(familyId, memberId);
+      allow update: if isAdminOf(familyId);
+      allow delete: if isAdminOf(familyId);
+    }
+
+    // ──────────── [THÊM MỚI] Invite codes: admin tạo/xóa; mọi người kiểm tra ────────────
+    match /families/{familyId}/invite_codes/{codeId} {
+      allow read: if isAdminOf(familyId);
+      allow create: if isAdminOf(familyId);
+      allow update: if isAdminOf(familyId);
+      allow delete: if isAdminOf(familyId);
+      // Mọi người (chưa authenticate) có thể kiểm tra code (được gọi từ register)
+      allow read: if signedIn() == false && request.query.where[0].field == 'code';
+    }
+
+      // Alias collection theo checklist mới
+      match /families/{familyId}/invites/{inviteId} {
+        allow read: if isFamilyMember(familyId) || signedIn();
+        allow create, update, delete: if isAdminOrManagerOf(familyId);
+      }
+
+    // ──────────── Family meta (seed flag) ────────────
+    match /families/{familyId}/meta/{docId} {
+      allow read, write: if isAdminOf(familyId);
+    }
+
+    // ──────────── Debts: admin/manager xem và quản lý; child không xem ────────────
+    match /families/{familyId}/debts/{debtId} {
+      allow read, write: if isAdminOrManagerOf(familyId);
+    }
+
+    // ──────────── Funds: admin/manager quản lý; child chỉ đọc ────────────
+    match /families/{familyId}/funds/{fundId} {
+      allow read: if isFamilyMember(familyId);
+      allow write: if isAdminOrManagerOf(familyId);
+    }
+
+    // ──────────── Events: mọi thành viên đọc; admin/manager tạo/sửa/xóa ────────────
+    match /families/{familyId}/events/{eventId} {
+      allow read: if isFamilyMember(familyId);
+      allow create, update, delete: if isAdminOrManagerOf(familyId);
+    }
+
+    // ──────────── [THÊM MỚI] Anniversary (Kỷ niệm): mọi thành viên đọc; admin/manager quản lý ────────────
+    match /families/{familyId}/anniversaries/{anniversaryId} {
+      allow read: if isFamilyMember(familyId);
+      allow create, update, delete: if isAdminOrManagerOf(familyId);
+    }
+
+    // ──────────── [THÊM MỚI] Photos (Ảnh kỷ niệm): mọi thành viên đọc; admin/manager/uploader quản lý ────────────
+    match /families/{familyId}/photos/{photoId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId);
+      allow update, delete: if isAdminOrManagerOf(familyId) || request.resource.data.uploadedBy == myUid();
+    }
+
+    // ──────────── [THÊM MỚI] Ví chung gia đình ────────────
+    match /families/{familyId}/wallets/{walletId} {
+      allow read: if isFamilyMember(familyId);
+      allow create, update: if isAdminOrManagerOf(familyId);
+      allow delete: if isAdminOf(familyId);
+    }
+
+    // ──────────── [THÊM MỚI] Thông báo realtime gia đình ────────────
+    match /families/{familyId}/notifications/{notifId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId);
+      allow delete: if isAdminOf(familyId);
+    }
+
+    // ──────────── collectionGroup cho invite code lookup ────────────
+    match /{path=**}/invites/{inviteId} {
+      allow read: if signedIn();
+    }
+
+    // ──────────── [XII] Vị trí realtime thành viên gia đình ────────────
+    // live_locations/{userId} — chỉ thành viên cùng family mới đọc được
+    match /live_locations/{targetUserId} {
+      // Chỉ cho phép đọc nếu cùng familyId
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/live_locations/$(targetUserId)) &&
+        isFamilyMember(
+          get(/databases/$(database)/documents/live_locations/$(targetUserId)).data.familyId
         );
 
-        allow write: if isAuthenticated() && isOwner(userId);
-      }
-    }
+      // Chỉ được ghi vị trí của chính mình
+      allow write: if signedIn() &&
+        myUid() == targetUserId &&
+        request.resource.data.userId == myUid() &&
+        request.resource.data.familyId is string &&
+        request.resource.data.familyId.size() > 0 &&
+        request.resource.data.latitude is number &&
+        request.resource.data.longitude is number;
 
-    // ─── GEOFENCES COLLECTION ───
-    match /geofences/{geofenceId} {
-      // Family members can read geofences
-      allow read: if isAuthenticated() &&
-        belongsToFamily(resource.data.familyId);
-
-      // Only parents can create/update/delete geofences
-      allow create: if isAuthenticated() &&
-        isParentInFamily(request.resource.data.familyId);
-
-      allow update: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-
-      allow delete: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-    }
-
-    // ─── SOS ALERTS COLLECTION ───
-    match /sos_alerts/{alertId} {
-      // Family members can read SOS alerts
-      allow read: if isAuthenticated() &&
-        belongsToFamily(resource.data.familyId);
-
-      // Children can create SOS alerts
-      allow create: if isAuthenticated() &&
-        request.resource.data.childId == request.auth.uid;
-
-      // Parents can update (resolve) SOS alerts
-      allow update: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-
-      // No one can delete SOS alerts (audit trail)
-      allow delete: if false;
-    }
-
-    // ─── DAILY REPORTS COLLECTION ───
-    match /daily_reports/{reportId} {
-      // Family members can read reports for their family's children
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.userId) ||
-        belongsToFamily(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId)
-      );
-
-      // The child user or parents can write reports
-      allow create, update: if isAuthenticated() && (
-        isOwner(request.resource.data.userId) ||
-        belongsToFamily(get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.familyId)
-      );
-
-      allow delete: if false;
-    }
-
-    // ─── TIMELINE EVENTS COLLECTION ───
-    match /timeline_events/{eventId} {
-      // Family members can read timeline events
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.userId) ||
-        belongsToFamily(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId)
-      );
-
-      allow create, update: if isAuthenticated() && (
-        isOwner(request.resource.data.userId) ||
-        belongsToFamily(get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.familyId)
-      );
-
-      allow delete: if false;
-    }
-
-    // ─── DANGER ZONES COLLECTION ───
-    match /danger_zones/{zoneId} {
-      // Family members can read danger zones
-      allow read: if isAuthenticated() &&
-        belongsToFamily(resource.data.familyId);
-
-      // Only parents can create/update/delete danger zones
-      allow create: if isAuthenticated() &&
-        isParentInFamily(request.resource.data.familyId);
-
-      allow update: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-
-      allow delete: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-    }
-
-    // ─── SCHEDULE CONFIGS COLLECTION ───
-    match /schedule_configs/{configId} {
-      // Family members can read schedule configs
-      allow read: if isAuthenticated() &&
-        belongsToFamily(resource.data.familyId);
-
-      // Only parents can create/update schedule configs
-      allow create: if isAuthenticated() &&
-        isParentInFamily(request.resource.data.familyId);
-
-      allow update: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
-
-      allow delete: if isAuthenticated() &&
-        isParentInFamily(resource.data.familyId);
+      // Chỉ được xóa vị trí của chính mình
+      allow delete: if signedIn() && myUid() == targetUserId;
     }
   }
 }

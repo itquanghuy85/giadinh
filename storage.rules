@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Thành viên gia đình (đăng nhập) có thể đọc ảnh của gia đình họ
+    // Upload: mọi thành viên đã đăng nhập
+    // Xóa: chỉ người upload hoặc admin (sẽ dùng custom claim hoặc luôn cho phép xóa file của mình)
+
+    // ── Ảnh kỷ niệm gia đình ──
+    match /families/{familyId}/photos/{photoId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024  // max 10MB
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null;
+    }
+
+    // ── Avatar thành viên ──
+    match /users/{uid}/avatar/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
