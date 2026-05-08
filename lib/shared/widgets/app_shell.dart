@@ -1,14 +1,10 @@
-import 'package:family_finance/app/theme/app_colors.dart';
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/calendar/presentation/calendar_screen.dart';
-import 'package:family_finance/features/family/presentation/family_screen.dart';
-import 'package:family_finance/features/family_map/presentation/family_map_screen.dart';
 import 'package:family_finance/features/home/presentation/home_screen.dart';
-import 'package:family_finance/features/report/presentation/report_screen.dart';
+import 'package:family_finance/features/settings/presentation/more_screen.dart';
 import 'package:family_finance/features/transaction/presentation/add_transaction_screen.dart';
 import 'package:family_finance/features/wallet/presentation/wallet_screen.dart';
-import 'package:family_finance/shared/models/app_user.dart';
 import 'package:family_finance/shared/services/connectivity_service.dart';
 import 'package:family_finance/shared/services/service_providers.dart';
 import 'package:flutter/material.dart';
@@ -69,24 +65,32 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
 
     final auth = ref.watch(authControllerProvider);
-    final role = auth.profile?.role ?? UserRole.childLimited;
-
     final destinations = <NavigationDestination>[
-      const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Trang chủ'),
-      const NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), label: 'Ví'),
       const NavigationDestination(
-        icon: CircleAvatar(
-          radius: 15,
-          backgroundColor: AppColors.primary,
-          child: Icon(Icons.add, color: Colors.white),
-        ),
+        icon: Icon(Icons.dashboard_outlined),
+        selectedIcon: Icon(Icons.dashboard),
+        label: 'Home',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.account_balance_wallet_outlined),
+        selectedIcon: Icon(Icons.account_balance_wallet),
+        label: 'Ví',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.add_circle_outline),
+        selectedIcon: Icon(Icons.add_circle),
         label: 'Thêm',
       ),
-      const NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Lịch'),
-      const NavigationDestination(icon: Icon(Icons.map_outlined), label: 'Bản đồ'),
-      if (role != UserRole.childLimited)
-        const NavigationDestination(icon: Icon(Icons.bar_chart_outlined), label: 'Báo cáo'),
-      const NavigationDestination(icon: Icon(Icons.groups_2_outlined), label: 'Gia đình'),
+      const NavigationDestination(
+        icon: Icon(Icons.calendar_month_outlined),
+        selectedIcon: Icon(Icons.calendar_month),
+        label: 'Lịch',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.grid_view_outlined),
+        selectedIcon: Icon(Icons.grid_view_rounded),
+        label: 'Menu',
+      ),
     ];
 
     final screens = [
@@ -94,9 +98,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       const WalletScreen(),
       const SizedBox.shrink(),
       const CalendarScreen(),
-      const FamilyMapScreen(),
-      if (role != UserRole.childLimited) const ReportScreen(),
-      const FamilyScreen(),
+      const MoreScreen(),
     ];
     final selectedIndex = _currentIndex >= screens.length ? 0 : _currentIndex;
 

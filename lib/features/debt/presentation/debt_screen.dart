@@ -71,11 +71,50 @@ class _DebtScreenState extends ConsumerState<DebtScreen> with SingleTickerProvid
         data: (debts) {
           final lends   = debts.where((d) => d.direction == 'lend').toList();
           final borrows = debts.where((d) => d.direction == 'borrow').toList();
-          return TabBarView(
-            controller: _tabController,
+          final totalLend   = lends.where((d) => !d.isPaid).fold(0.0, (s, d) => s + d.amount);
+          final totalBorrow = borrows.where((d) => !d.isPaid).fold(0.0, (s, d) => s + d.amount);
+          return Column(
             children: [
-              _DebtList(debts: lends,   color: AppColors.income,  onAction: _onAction),
-              _DebtList(debts: borrows, color: AppColors.expense,  onAction: _onAction),
+              // KPI bar
+              if (debts.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      _KpiChip(label: 'Cần thu', amount: totalLend, color: AppColors.income),
+                      const SizedBox(width: 12),
+                      Container(width: 1, height: 28, color: AppColors.border),
+                      const SizedBox(width: 12),
+                      _KpiChip(label: 'Cần trả', amount: totalBorrow, color: AppColors.expense),
+                      const Spacer(),
+                      Text('Net: ',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text(
+                        MoneyFormatter.format(totalLend - totalBorrow),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: (totalLend - totalBorrow) >= 0 ? AppColors.income : AppColors.expense,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _DebtList(debts: lends,   color: AppColors.income,  onAction: _onAction),
+                    _DebtList(debts: borrows, color: AppColors.expense,  onAction: _onAction),
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -271,36 +310,37 @@ class _DebtCard extends StatelessWidget {
             : 'Đang chờ';
 
     return Card(
+      margin: const EdgeInsets.only(bottom: 4),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.12),
-          child: Icon(debt.isLend ? Icons.arrow_downward : Icons.arrow_upward, color: color, size: 20),
+          radius: 16,
+          child: Icon(debt.isLend ? Icons.arrow_downward : Icons.arrow_upward, color: color, size: 14),
         ),
-        title: Text(debt.personName, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hạn: $dateStr', style: const TextStyle(fontSize: 12)),
-            if (debt.note.isNotEmpty)
-              Text(debt.note, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-          ],
+        title: Text(debt.personName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        subtitle: Text(
+          'Hạn: $dateStr${debt.note.isNotEmpty ? ' · ${debt.note}' : ''}',
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          overflow: TextOverflow.ellipsis,
         ),
         trailing: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               MoneyFormatter.format(debt.amount),
-              style: TextStyle(fontWeight: FontWeight.w700, color: color),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: badgeColor.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(badgeText, style: TextStyle(fontSize: 11, color: badgeColor, fontWeight: FontWeight.w600)),
+              child: Text(badgeText, style: TextStyle(fontSize: 10, color: badgeColor, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -308,6 +348,27 @@ class _DebtCard extends StatelessWidget {
             ? null
             : () => onAction(_DebtAction.markPaid, debt),
       ),
+    );
+  }
+}
+
+// ── KPI chip ─────────────────────────────────────────────────
+class _KpiChip extends StatelessWidget {
+  const _KpiChip({required this.label, required this.amount, required this.color});
+  final String label;
+  final double amount;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        Text(MoneyFormatter.format(amount),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+      ],
     );
   }
 }

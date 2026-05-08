@@ -59,24 +59,23 @@ class _WalletDetailScreenState extends ConsumerState<WalletDetailScreen> {
       ),
       body: Column(
         children: [
-          // ── Số dư ────────────────────────────────────────────
+          // ── Số dư header ─────────────────────────────────────
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Số dư hiện tại', style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: 6),
+                Text('Số dư', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                const SizedBox(height: 2),
                 SecureMoneyText(
                   amount: widget.wallet.balance,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),
                 ),
               ],
             ),
@@ -239,26 +238,28 @@ class _TxTile extends ConsumerWidget {
 
   Widget _buildCard(BuildContext context, String dateStr) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 4),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         leading: CircleAvatar(
           backgroundColor: _color.withOpacity(0.12),
-          radius: 18,
-          child: Text(
-            _sign,
-            style: TextStyle(color: _color, fontWeight: FontWeight.w800, fontSize: 18),
+          radius: 16,
+          child: Icon(
+            tx.type == TransactionType.income ? Icons.arrow_downward : tx.type == TransactionType.expense ? Icons.arrow_upward : Icons.swap_horiz,
+            color: _color,
+            size: 14,
           ),
         ),
-        title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        subtitle: Row(
           children: [
-            if (tx.note.isNotEmpty) Text(tx.note, style: const TextStyle(fontSize: 12)),
+            if (tx.note.isNotEmpty) Expanded(child: Text(tx.note, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
             Text(dateStr, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           ],
         ),
         trailing: Text(
           '${_sign}${MoneyFormatter.format(tx.amount)}',
-          style: TextStyle(fontWeight: FontWeight.w700, color: _color),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _color),
         ),
       ),
     );

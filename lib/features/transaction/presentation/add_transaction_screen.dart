@@ -1,4 +1,5 @@
 import 'package:family_finance/app/theme/app_colors.dart';
+import 'package:family_finance/app/theme/app_space.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/wallet/providers/wallet_provider.dart';
 import 'package:family_finance/shared/models/transaction.dart';
@@ -23,25 +24,23 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   TransactionType _type = TransactionType.expense;
   String _selectedCategory = 'Ăn uống';
   String? _selectedWalletId;
-  String? _selectedDestWalletId; // Ví đích khi chuyển
+  String? _selectedDestWalletId;
 
   static const _categories = [
-    'Ăn uống',
-    'Xăng',
-    'Đi chợ',
-    'Học phí',
-    'Mua sắm',
-    'Điện nước',
-    'Sửa chữa',
-    'Khác',
+    ('Ăn uống', Icons.restaurant_outlined),
+    ('Xăng', Icons.local_gas_station_outlined),
+    ('Đi chợ', Icons.shopping_basket_outlined),
+    ('Học phí', Icons.school_outlined),
+    ('Mua sắm', Icons.shopping_cart_outlined),
+    ('Điện nước', Icons.bolt_outlined),
+    ('Sửa chữa', Icons.build_outlined),
+    ('Khác', Icons.widgets_outlined),
   ];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _amountFocus.requestFocus();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _amountFocus.requestFocus());
   }
 
   @override
@@ -52,6 +51,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     super.dispose();
   }
 
+  bool get _hasDirtyData => _amountController.text.isNotEmpty || _noteController.text.isNotEmpty;
+
+  Future<bool> _confirmDiscard() async {
+    if (!_hasDirtyData) return true;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hủy nhập?'),
+        content: const Text('Dữ liệu chưa lưu sẽ bị mất.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tiếp tục')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Thoát')),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   Future<void> _save() async {
     final auth = ref.read(authControllerProvider);
     final uid = auth.user?.uid;
@@ -59,23 +76,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     if (uid == null) return;
 
     final amount = double.tryParse(_amountController.text.replaceAll('.', '').replaceAll(',', ''));
-    if (amount == null || amount <= 0 || _selectedWalletId == null) return;
+    if (amount == null || amount <= 0 || _selectedWalletId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nhập số tiền và chọn ví nguồn')));
+      return;
+    }
 
-    // --- Chuyển tiền: dùng batch write riêng ---
     if (_type == TransactionType.transfer) {
       if (_selectedDestWalletId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vui lòng chọn ví đích')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn ví đích')));
         return;
       }
       if (_selectedDestWalletId == _selectedWalletId) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ví nguồn và ví đích phải khác nhau')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ví nguồn và ví đích phải khác nhau')));
         return;
       }
-      // Validate balance
+
       final wallets = ref.read(walletsProvider).valueOrNull ?? [];
       final source = wallets.where((w) => w.id == _selectedWalletId).firstOrNull;
       if (source != null && source.balance < amount) {
@@ -84,6 +99,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         );
         return;
       }
+
       await ref.read(firestoreServiceProvider).transferBetweenWallets(
             uid: uid,
             sourceWalletId: _selectedWalletId!,
@@ -109,8 +125,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
 
     await ref.read(firestoreServiceProvider).addTransaction(uid, tx);
-    
-    // [THÊM MỚI] Notify for large transactions (> 500k)
+
     if (amount > 500000) {
       await TransactionNotificationHandler.notifyLargeTransaction(
         tx,
@@ -122,25 +137,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     Navigator.pop(context);
   }
 
-  bool get _hasDirtyData =>
-      _amountController.text.isNotEmpty || _noteController.text.isNotEmpty;
-
-  Future<bool> _confirmDiscard() async {
-    if (!_hasDirtyData) return true;
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hủy nhập?'),
-        content: const Text('Dữ liệu chưa lưu sẽ bị mất.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tiếp tục')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Thoát')),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final wallets = ref.watch(walletsProvider).valueOrNull ?? const [];
@@ -150,117 +146,111 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         final ok = await _confirmDiscard();
-        if (ok && context.mounted) {
-          Navigator.pop(context);
-        }
+        if (ok && context.mounted) Navigator.pop(context);
       },
       child: Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                height: 4,
-                width: 44,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(8)),
+        padding: EdgeInsets.only(
+          left: AppSpace.lg,
+          right: AppSpace.lg,
+          top: AppSpace.md,
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.lg,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  height: 4,
+                  width: 46,
+                  margin: const EdgeInsets.only(bottom: AppSpace.sm),
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(8)),
+                ),
               ),
-            ),
-            TextField(
-              controller: _amountController,
-              focusNode: _amountFocus,
-              keyboardType: TextInputType.number,
-              inputFormatters: [ThousandsSeparatorFormatter()],
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
-              decoration: const InputDecoration(labelText: 'Số tiền'),
-            ),
-            const SizedBox(height: 12),
-            SegmentedButton<TransactionType>(
-              segments: const [
-                ButtonSegment(value: TransactionType.income, label: Text('Thu')),
-                ButtonSegment(value: TransactionType.expense, label: Text('Chi')),
-                ButtonSegment(value: TransactionType.transfer, label: Text('Chuyển')),
-              ],
-              selected: {_type},
-              onSelectionChanged: (value) => setState(() => _type = value.first),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _categories.map((cat) {
-                final selected = cat == _selectedCategory;
-                return ChoiceChip(
-                  label: Text(cat),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _selectedCategory = cat),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedWalletId,
-              hint: const Text('Chọn ví nguồn'),
-              items: wallets
-                  .map(
-                    (w) => DropdownMenuItem<String>(
-                      value: w.id,
-                      child: Text(w.name),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _selectedWalletId = value),
-            ),
-            if (_type == TransactionType.transfer) ...[
-              const SizedBox(height: 12),
+              Text('Thêm giao dịch', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpace.md),
+              TextField(
+                controller: _amountController,
+                focusNode: _amountFocus,
+                keyboardType: TextInputType.number,
+                inputFormatters: [ThousandsSeparatorFormatter()],
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                decoration: const InputDecoration(labelText: 'Số tiền'),
+              ),
+              const SizedBox(height: AppSpace.sm),
+              SegmentedButton<TransactionType>(
+                style: ButtonStyle(
+                  visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                  textStyle: WidgetStateProperty.all(Theme.of(context).textTheme.labelMedium),
+                ),
+                segments: const [
+                  ButtonSegment(value: TransactionType.income, label: Text('Thu')),
+                  ButtonSegment(value: TransactionType.expense, label: Text('Chi')),
+                  ButtonSegment(value: TransactionType.transfer, label: Text('Chuyển')),
+                ],
+                selected: {_type},
+                onSelectionChanged: (value) => setState(() => _type = value.first),
+              ),
+              const SizedBox(height: AppSpace.sm),
+              Wrap(
+                spacing: AppSpace.xs,
+                runSpacing: AppSpace.xs,
+                children: _categories.map((entry) {
+                  final cat = entry.$1;
+                  final icon = entry.$2;
+                  final selected = cat == _selectedCategory;
+                  return ChoiceChip(
+                    avatar: Icon(icon, size: 14, color: selected ? AppColors.primary : AppColors.textSecondary),
+                    label: Text(cat),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _selectedCategory = cat),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: AppSpace.sm),
               DropdownButtonFormField<String>(
-                initialValue: _selectedDestWalletId,
-                hint: const Text('Chọn ví đích'),
+                initialValue: _selectedWalletId,
+                hint: const Text('Chọn ví nguồn'),
                 items: wallets
-                    .where((w) => w.id != _selectedWalletId)
-                    .map(
-                      (w) => DropdownMenuItem<String>(
-                        value: w.id,
-                        child: Text(w.name),
-                      ),
-                    )
+                    .map((w) => DropdownMenuItem<String>(value: w.id, child: Text(w.name)))
                     .toList(),
-                onChanged: (value) => setState(() => _selectedDestWalletId = value),
+                onChanged: (value) => setState(() => _selectedWalletId = value),
+              ),
+              if (_type == TransactionType.transfer) ...[
+                const SizedBox(height: AppSpace.sm),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedDestWalletId,
+                  hint: const Text('Chọn ví đích'),
+                  items: wallets
+                      .where((w) => w.id != _selectedWalletId)
+                      .map((w) => DropdownMenuItem<String>(value: w.id, child: Text(w.name)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _selectedDestWalletId = value),
+                ),
+              ],
+              const SizedBox(height: AppSpace.sm),
+              TextField(
+                controller: _noteController,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Ghi chú (tuỳ chọn)'),
+              ),
+              const SizedBox(height: AppSpace.md),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _save,
+                  icon: const Icon(Icons.save_outlined, size: 18),
+                  label: const Text('Lưu giao dịch'),
+                ),
               ),
             ],
-            const SizedBox(height: 12),
-            TextField(
-              controller: _noteController,
-              decoration: const InputDecoration(labelText: 'Ghi chú (tuỳ chọn)'),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _save,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text('Lưu giao dịch'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

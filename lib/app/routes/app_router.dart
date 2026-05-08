@@ -1,6 +1,7 @@
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/features/auth/presentation/login_screen.dart';
 import 'package:family_finance/features/debt/presentation/debt_screen.dart';
+import 'package:family_finance/features/family/presentation/family_screen.dart';
 import 'package:family_finance/features/family/presentation/join_family_screen.dart';
 import 'package:family_finance/features/family_map/presentation/family_map_screen.dart';
 import 'package:family_finance/features/fund/presentation/fund_screen.dart';
@@ -27,6 +28,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const FundScreen());
       case AppRoutes.report:
         return MaterialPageRoute(builder: (_) => const ReportScreen());
+      case AppRoutes.family:
+        return MaterialPageRoute(builder: (_) => const FamilyScreen());
       case AppRoutes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsScreen());
       case AppRoutes.joinFamily:

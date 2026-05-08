@@ -1,4 +1,5 @@
 import 'package:family_finance/app/theme/app_colors.dart';
+import 'package:family_finance/app/theme/app_space.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/calendar/providers/calendar_provider.dart';
 import 'package:family_finance/features/calendar/providers/event_edit_provider.dart';
@@ -99,7 +100,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
           data: (members) {
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpace.screen,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,10 +125,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.sm),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: AppSpace.xs),
                     child: TableCalendar<FamilyEvent>(
                       firstDay: DateTime(2020),
                   lastDay: DateTime(2035),
@@ -143,8 +144,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       nextDay.day,
                     );
                   },
-                  calendarStyle: const CalendarStyle(
-                    markerDecoration: BoxDecoration(color: AppColors.income, shape: BoxShape.circle),
+                  calendarStyle: CalendarStyle(
+                    markerDecoration: const BoxDecoration(color: AppColors.income, shape: BoxShape.circle),
+                    cellMargin: const EdgeInsets.all(2),
+                    defaultTextStyle: Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12),
+                    weekendTextStyle: Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12),
+                    todayTextStyle: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700) ?? const TextStyle(fontSize: 12),
                   ),
                   eventLoader: (day) {
                     return events.where((event) {
@@ -155,9 +160,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text('Sự kiện hôm nay', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.md),
+            Text('Sự kiện hôm nay', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: AppSpace.sm),
             if (selectedDayEvents.isEmpty)
               const Card(child: ListTile(title: Text('Chưa có sự kiện cho ngày này'))),
             ...selectedDayEvents.map((event) {
@@ -168,6 +173,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     border: Border(left: BorderSide(color: AppColors.primary, width: 4)),
                   ),
                   child: ListTile(
+                    dense: true,
+                    visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
                     title: Text(event.title),
                     subtitle: Text('${DateFormat('HH:mm').format(event.startAt)} · ${event.assignee} · Lặp ${event.repeat}'),
                     onLongPress: !canDelete

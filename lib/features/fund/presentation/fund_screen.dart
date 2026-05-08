@@ -95,57 +95,63 @@ class _FundCard extends ConsumerWidget {
     return GestureDetector(
       onLongPress: () => _showMenu(context, ref),
       child: Card(
+        margin: const EdgeInsets.only(bottom: 6),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 10, height: 10,
+                    width: 8, height: 8,
                     decoration: BoxDecoration(
                       color: Color(int.parse(fund.colorHex, radix: 16)),
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
-                    child: Text(fund.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    child: Text(fund.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
-                  Text('$pct%', style: TextStyle(fontWeight: FontWeight.w700, color: _progressColor)),
+                  if (fund.isCompleted)
+                    const Icon(Icons.emoji_events, size: 14, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text('$pct%', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: _progressColor)),
                 ],
               ),
-              if (fund.description.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(fund.description, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              if (fund.description.isNotEmpty) ...[   
+                const SizedBox(height: 2),
+                Text(fund.description, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
               ],
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: fund.progress,
-                  minHeight: 8,
+                  minHeight: 6,
                   color: _progressColor,
                   backgroundColor: AppColors.border,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${MoneyFormatter.format(fund.currentAmount)} / ${MoneyFormatter.format(fund.targetAmount)}',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  Expanded(
+                    child: Text(
+                      '${MoneyFormatter.format(fund.currentAmount)} / ${MoneyFormatter.format(fund.targetAmount)}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
                   ),
-                  Row(
-                    children: [
-                      TextButton(onPressed: () => _showDeposit(context, ref), child: const Text('Nạp tiền')),
-                      TextButton(
-                        onPressed: fund.currentAmount > 0 ? () => _showWithdraw(context, ref) : null,
-                        child: const Text('Rút'),
-                      ),
-                    ],
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    onPressed: () => _showDeposit(context, ref),
+                    child: const Text('Nạp tiền', style: TextStyle(fontSize: 11)),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    onPressed: fund.currentAmount > 0 ? () => _showWithdraw(context, ref) : null,
+                    child: const Text('Rút', style: TextStyle(fontSize: 11)),
                   ),
                 ],
               ),

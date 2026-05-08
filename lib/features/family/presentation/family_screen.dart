@@ -1,4 +1,5 @@
 import 'package:family_finance/app/theme/app_colors.dart';
+import 'package:family_finance/app/theme/app_space.dart';
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/family/providers/family_provider.dart';
@@ -89,7 +90,7 @@ class FamilyScreen extends ConsumerWidget {
     final uid = ref.watch(authControllerProvider).user?.uid ?? '';
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpace.screen,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -113,9 +114,26 @@ class FamilyScreen extends ConsumerWidget {
         ...members.map((member) {
           return Card(
             child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Text(member.name.characters.first.toUpperCase()),
+              dense: true,
+              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+              leading: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    child: Text(member.name.characters.first.toUpperCase()),
+                  ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.income,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ],
               ),
               title: Text(member.name),
               subtitle: Text(member.role),
@@ -177,72 +195,77 @@ class FamilyScreen extends ConsumerWidget {
                     ),
                   )
                 else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                    itemCount: photos.length,
-                    itemBuilder: (_, index) {
-                      final photo = photos[index];
-                      final canDelete = photo.uploadedBy == uid || members.any((m) => m.uid == uid && (m.role == 'fatherAdmin' || m.role == 'motherManager'));
-                      return GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PhotoViewerScreen(
-                              photos: photos,
-                              initialIndex: index,
+                  SizedBox(
+                    height: 118,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: photos.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, index) {
+                        final photo = photos[index];
+                        final canDelete = photo.uploadedBy == uid || members.any((m) => m.uid == uid && (m.role == 'fatherAdmin' || m.role == 'motherManager'));
+                        return SizedBox(
+                          width: 150,
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PhotoViewerScreen(
+                                  photos: photos,
+                                  initialIndex: index,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        onLongPress: canDelete
-                            ? () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  builder: (_) => Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    child: ListTile(
-                                      leading: const Icon(Icons.delete, color: Colors.red),
-                                      title: const Text('Xóa', style: TextStyle(color: Colors.red)),
-                                      onTap: () async {
-                                        Navigator.pop(context);
-                                        try {
-                                          await ref.read(photoUploadServiceProvider).deletePhoto(familyId, photo.id);
-                                          ref.invalidate(familyPhotosProvider(familyId));
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Ảnh đã xóa')),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Lỗi: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
+                            onLongPress: canDelete
+                                ? () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (_) => Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        child: ListTile(
+                                          leading: const Icon(Icons.delete, color: Colors.red),
+                                          title: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                                          onTap: () async {
+                                            Navigator.pop(context);
+                                            try {
+                                              await ref.read(photoUploadServiceProvider).deletePhoto(familyId, photo.id);
+                                              ref.invalidate(familyPhotosProvider(familyId));
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('Ảnh đã xóa')),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Lỗi: $e')),
+                                                );
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(color: Colors.grey[200]),
+                                child: CachedNetworkImage(
+                                  imageUrl: photo.thumbnailUrl.isNotEmpty ? photo.thumbnailUrl : photo.imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                  errorWidget: (_, __, ___) => const Center(
+                                    child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
                                   ),
-                                );
-                              }
-                            : null,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(color: Colors.grey[200]),
-                            child: CachedNetworkImage(
-                              imageUrl: photo.thumbnailUrl.isNotEmpty ? photo.thumbnailUrl : photo.imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                              errorWidget: (_, __, ___) => const Center(
-                                child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
         const SizedBox(height: 10),
         Row(

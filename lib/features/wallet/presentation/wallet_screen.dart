@@ -1,5 +1,6 @@
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/app/theme/app_colors.dart';
+import 'package:family_finance/app/theme/app_space.dart';
 import 'package:family_finance/shared/models/app_user.dart';
 import 'package:family_finance/features/wallet/providers/wallet_provider.dart';
 import 'package:family_finance/shared/models/transaction.dart';
@@ -73,12 +74,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.account_balance_wallet_outlined, size: 72, color: AppColors.border),
-                const SizedBox(height: 16),
+                const Icon(Icons.account_balance_wallet_outlined, size: 52, color: AppColors.border),
+                const SizedBox(height: AppSpace.md),
                 Text('Chưa có ví nào', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                const Text('Tạo ví đầu tiên để bắt đầu theo dõi chi tiêu', style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.sm),
+                Text('Tạo ví đầu tiên để bắt đầu theo dõi chi tiêu', style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: AppSpace.lg),
                 if (role != UserRole.childLimited)
                   FilledButton.icon(
                     icon: const Icon(Icons.add),
@@ -97,33 +98,28 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             ),
           );
         }
+
         return ListView(
           controller: _scrollController,
-          padding: const EdgeInsets.all(16),
+          padding: AppSpace.screen,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Danh sách ví', style: Theme.of(context).textTheme.titleLarge),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
-                      tooltip: 'Tìm kiếm giao dịch',
-                    ),
-                    Chip(label: Text('Vai trò: ${role.name}')),
-                  ],
+                Expanded(
+                  child: Text('Ví của bạn', style: Theme.of(context).textTheme.titleMedium),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                  tooltip: 'Tìm kiếm giao dịch',
                 ),
               ],
             ),
-            const SizedBox(height: 10),
             if (role != UserRole.childLimited)
               SizedBox(
-                width: double.infinity,
-                height: 48,
+                height: 40,
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, size: 18),
                   label: const Text('Thêm ví'),
                   onPressed: () => showDialog(
                     context: context,
@@ -136,7 +132,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   ),
                 ),
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.sm),
             ...wallets.map((wallet) {
               final canOpenDetail = role != UserRole.childLimited || wallet.ownerUid == currentUid;
               final canEdit = wallet.ownerUid == currentUid || role == UserRole.fatherAdmin;
@@ -147,10 +143,16 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     : null,
                 child: Card(
                   child: ListTile(
+                    dense: true,
+                    visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
                     onTap: canOpenDetail
                         ? () => Navigator.pushNamed(context, AppRoutes.walletDetail, arguments: wallet)
                         : null,
-                    leading: CircleAvatar(backgroundColor: wallet.dotColor, radius: 6),
+                    leading: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(color: wallet.dotColor, shape: BoxShape.circle),
+                    ),
                     title: Text(wallet.name),
                     subtitle: wallet.ownerUid == currentUid ? null : Text('Chủ ví: ${wallet.ownerUid}'),
                     trailing: SecureMoneyText(amount: wallet.balance),
@@ -158,23 +160,23 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 ),
               );
             }),
-            const SizedBox(height: 12),
-            Text('Giao dịch gần đây', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.md),
+            Text('Giao dịch gần đây', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: AppSpace.sm),
             ...txState.items.map((item) => _TransactionTile(item: item)),
             if (txState.error != null)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: AppSpace.sm),
                 child: Text(txState.error!, style: const TextStyle(color: AppColors.expense)),
               ),
             if (txState.isLoadingMore)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
                 child: Center(child: CircularProgressIndicator()),
               ),
             if (!txState.hasMore)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: AppSpace.sm),
                 child: Center(child: Text('Đã tải hết giao dịch')),
               ),
           ],
@@ -183,17 +185,17 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     );
   }
 
-  /// [THÊM MỚI] Hiển thị menu dài (long press)
-  void _showWalletMenu(BuildContext context, var wallet, String currentUid) {
+  void _showWalletMenu(BuildContext context, dynamic wallet, String currentUid) {
     final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) => Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              dense: true,
               leading: const Icon(Icons.edit),
               title: const Text('Sửa số dư'),
               onTap: () {
@@ -211,6 +213,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
               },
             ),
             ListTile(
+              dense: true,
               leading: const Icon(Icons.text_fields),
               title: const Text('Đổi tên ví'),
               onTap: () {
@@ -228,6 +231,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
               },
             ),
             ListTile(
+              dense: true,
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('Xóa ví', style: TextStyle(color: Colors.red)),
               onTap: () {
@@ -268,21 +272,35 @@ class _TransactionTile extends ConsumerWidget {
     final amount = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0).format(item.amount);
 
     return Card(
-      child: ListTile(
-        title: Text(item.category),
-        subtitle: Text('${DateFormat('dd/MM/yyyy HH:mm').format(item.createdAt)} · ${item.note}'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+        child: Row(
           children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.category, style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${DateFormat('dd/MM HH:mm').format(item.createdAt)}${item.note.isNotEmpty ? ' · ${item.note}' : ''}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
             Text(
               '$sign$amount',
-              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(width: 6),
             RoleGuard(
               roleRequired: const [UserRole.fatherAdmin, UserRole.motherManager],
               child: IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
                 onPressed: canDelete
                     ? () async {
                         await ref.read(firestoreServiceProvider).deleteTransaction(item.ownerUid, item.id);

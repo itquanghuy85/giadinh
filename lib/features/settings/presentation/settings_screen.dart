@@ -262,35 +262,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         leading: const AppBackButton(),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           // ── Tài khoản ─────────────────────────────────────
           _SectionHeader(label: 'Tài khoản'),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: 22,
                     backgroundColor: AppColors.primary.withOpacity(0.15),
                     child: Text(
                       (profile?.displayName.isNotEmpty == true ? profile!.displayName[0] : 'U').toUpperCase(),
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.primary),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.primary),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(profile?.displayName ?? 'Thành viên',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 2),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                         Text(user?.email ?? '', style: Theme.of(context).textTheme.bodySmall),
-                        const SizedBox(height: 2),
                         Text('Vai trò: ${profile?.role.name ?? '-'}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary)),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontSize: 11)),
                       ],
                     ),
                   ),
@@ -298,24 +296,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.lock_reset_outlined),
+                  dense: true,
+                  leading: const Icon(Icons.lock_reset_outlined, size: 20),
                   title: const Text('Đổi mật khẩu'),
                   onTap: _changePassword,
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(Icons.chevron_right, size: 18),
                 ),
-                const Divider(height: 1, indent: 52),
+                const Divider(height: 1, indent: 48),
                 ListTile(
-                  leading: const Icon(Icons.link_outlined),
-                  title: const Text('Liên kết tài khoản Google'),
-                  subtitle: Text(linkedGoogle ? 'Đã liên kết Google' : 'Chưa liên kết'),
+                  dense: true,
+                  leading: const Icon(Icons.link_outlined, size: 20),
+                  title: const Text('Liên kết Google'),
+                  subtitle: Text(linkedGoogle ? 'Đã liên kết Google' : 'Chưa liên kết',
+                      style: const TextStyle(fontSize: 11)),
                   trailing: _linkingGoogle
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.chevron_right),
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.chevron_right, size: 18),
                   onTap: _linkingGoogle ? null : _linkGoogleAccount,
                 ),
               ],
@@ -323,11 +324,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // ── Hiển thị ──────────────────────────────────────
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           _SectionHeader(label: 'Hiển thị'),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.brightness_medium_outlined),
+              dense: true,
+              leading: const Icon(Icons.brightness_medium_outlined, size: 20),
               title: const Text('Giao diện'),
               trailing: DropdownButton<ThemeMode>(
                 value: currentTheme,
@@ -348,16 +350,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // ── Dữ liệu ───────────────────────────────────────
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           _SectionHeader(label: 'Dữ liệu'),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.backup_outlined),
+                  dense: true,
+                  leading: const Icon(Icons.backup_outlined, size: 20),
                   title: const Text('Sao lưu dữ liệu'),
-                  subtitle: const Text('Xuất file JSON qua share sheet'),
-                  trailing: const Icon(Icons.chevron_right),
+                  subtitle: const Text('Xuất file JSON qua share sheet', style: TextStyle(fontSize: 11)),
+                  trailing: const Icon(Icons.chevron_right, size: 18),
                   onTap: _backupData,
                 ),
               ],
@@ -365,30 +368,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // ── Ứng dụng ──────────────────────────────────────
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           _SectionHeader(label: 'Ứng dụng'),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.info_outline),
+                  dense: true,
+                  leading: const Icon(Icons.info_outline, size: 20),
                   title: const Text('Phiên bản'),
-                  trailing: Text(_appVersion, style: const TextStyle(color: AppColors.textSecondary)),
+                  trailing: Text(_appVersion, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                 ),
-                const Divider(height: 1, indent: 52),
+                const Divider(height: 1, indent: 48),
                 ListTile(
-                  leading: const Icon(Icons.description_outlined),
+                  dense: true,
+                  leading: const Icon(Icons.description_outlined, size: 20),
                   title: const Text('Điều khoản sử dụng'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(Icons.chevron_right, size: 18),
                   onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Điều khoản sử dụng (sẽ được cập nhật)')),
                   ),
                 ),
-                const Divider(height: 1, indent: 52),
+                const Divider(height: 1, indent: 48),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
+                  dense: true,
+                  leading: const Icon(Icons.privacy_tip_outlined, size: 20),
                   title: const Text('Chính sách bảo mật'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(Icons.chevron_right, size: 18),
                   onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Chính sách bảo mật (sẽ được cập nhật)')),
                   ),
@@ -398,7 +404,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // ── Nguy hiểm ─────────────────────────────────────
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
