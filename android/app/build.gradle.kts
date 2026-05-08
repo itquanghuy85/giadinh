@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,10 +10,10 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-val localProperties = java.util.Properties().apply {
+val localProperties = Properties().also { props: Properties ->
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
-        localPropertiesFile.inputStream().use { load(it) }
+        FileInputStream(localPropertiesFile).use { stream -> props.load(stream) }
     }
 }
 
@@ -30,7 +33,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
