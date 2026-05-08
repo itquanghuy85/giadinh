@@ -1,6 +1,7 @@
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/home/providers/home_provider.dart';
+import 'package:family_finance/features/transaction/presentation/add_transaction_screen.dart';
 import 'package:family_finance/shared/models/app_user.dart';
 import 'package:family_finance/shared/utils/money_formatter.dart';
 import 'package:family_finance/shared/widgets/role_guard.dart';
@@ -14,6 +15,15 @@ import 'package:intl/intl.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  void _openAddTransaction(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AddTransactionScreen(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,6 +59,44 @@ class HomeScreen extends ConsumerWidget {
           child: ListView(
             padding: AppSpace.screen,
             children: [
+              // ── Topbar ────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.isEmpty ? 'Xin chào!' : 'Xin chào, $userName 👋',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          today,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _openAddTransaction(context),
+                    icon: const Icon(Icons.add_circle_outline),
+                    tooltip: 'Thêm giao dịch',
+                    color: AppColors.primary,
+                    iconSize: 28,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: 'Cài đặt',
+                    iconSize: 24,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.md),
               _DashboardHeader(userName: userName, today: today, balance: balance),
               const SizedBox(height: AppSpace.md),
               GridView.count(
@@ -64,24 +112,28 @@ class HomeScreen extends ConsumerWidget {
                     value: MoneyFormatter.format(income),
                     icon: Icons.trending_up,
                     tone: AppColors.income,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.report),
                   ),
                   _MetricCard(
                     label: 'Chi tháng',
                     value: MoneyFormatter.format(expense),
                     icon: Icons.trending_down,
                     tone: AppColors.expense,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.report),
                   ),
                   _MetricCard(
                     label: 'Còn lại',
                     value: MoneyFormatter.format(remain),
                     icon: Icons.savings_outlined,
                     tone: remain >= 0 ? AppColors.primary : AppColors.expense,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.report),
                   ),
                   _MetricCard(
                     label: 'Tỉ lệ chi',
                     value: '${(expenseRate * 100).toStringAsFixed(0)}%',
                     icon: Icons.speed_outlined,
                     tone: expenseRate > 0.8 ? AppColors.warning : AppColors.transfer,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.report),
                   ),
                 ],
               ),
@@ -194,47 +246,53 @@ class _MetricCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.tone,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color tone;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: AppSpace.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: tone),
-                const SizedBox(width: AppSpace.xs),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: AppSpace.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16, color: tone),
+                  const SizedBox(width: AppSpace.xs),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: tone,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: tone,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );

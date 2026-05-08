@@ -21,6 +21,7 @@ Future<void> main() async {
   );
 
   await NotificationService.instance.initialize();
+  await NotificationService.instance.requestPermission();
 
   runApp(const ProviderScope(child: FamilyFinanceApp()));
 }

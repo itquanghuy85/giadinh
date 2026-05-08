@@ -3,6 +3,7 @@ import 'package:family_finance/features/auth/presentation/login_screen.dart';
 import 'package:family_finance/features/debt/presentation/debt_screen.dart';
 import 'package:family_finance/features/family/presentation/family_screen.dart';
 import 'package:family_finance/features/family/presentation/join_family_screen.dart';
+import 'package:family_finance/features/family/presentation/family_map_members_screen.dart';
 import 'package:family_finance/features/family_map/presentation/family_map_screen.dart';
 import 'package:family_finance/features/fund/presentation/fund_screen.dart';
 import 'package:family_finance/features/report/presentation/report_screen.dart';
@@ -41,6 +42,8 @@ class AppRouter {
           builder: (_) => const FamilyMapScreen(),
           fullscreenDialog: true,
         );
+      case AppRoutes.familyMapMembers:
+        return MaterialPageRoute(builder: (_) => const FamilyMapMembersScreen());
       default:
         return null;
     }

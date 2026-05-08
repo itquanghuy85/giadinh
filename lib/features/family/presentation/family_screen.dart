@@ -6,6 +6,7 @@ import 'package:family_finance/features/family/providers/family_provider.dart';
 import 'package:family_finance/features/family/providers/anniversary_provider.dart';
 import 'package:family_finance/features/family/presentation/add_anniversary_dialog.dart';
 import 'package:family_finance/features/family/presentation/add_member_screen.dart';
+import 'package:family_finance/features/family/presentation/family_map_members_screen.dart';
 import 'package:family_finance/features/family/presentation/photo_viewer_screen.dart';
 import 'package:family_finance/features/family/providers/photo_provider.dart';
 import 'package:family_finance/features/family/presentation/photo_upload_dialog.dart';
@@ -92,24 +93,46 @@ class FamilyScreen extends ConsumerWidget {
     return ListView(
       padding: AppSpace.screen,
       children: [
+        // ── Header hành động ────────────────────────────────────────
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Thành viên', style: Theme.of(context).textTheme.titleLarge),
-            RoleGuard(
-              roleRequired: const [UserRole.fatherAdmin],
-              child: FilledButton.tonal(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddMemberScreen(familyId: familyId),
+            Text('Gia đình', style: Theme.of(context).textTheme.titleLarge),
+            Row(
+              children: [
+                FilledButton.tonal(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FamilyMapMembersScreen()),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16),
+                      SizedBox(width: 4),
+                      Text('Bản đồ'),
+                    ],
                   ),
                 ),
-                child: const Text('+ Thêm thành viên'),
-              ),
+                const SizedBox(width: 8),
+                RoleGuard(
+                  roleRequired: const [UserRole.fatherAdmin],
+                  child: FilledButton.tonal(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddMemberScreen(familyId: familyId),
+                      ),
+                    ),
+                    child: const Text('+ Thêm thành viên'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Text('Thành viên', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.textSecondary)),
         const SizedBox(height: 8),
         ...members.map((member) {
           return Card(
@@ -166,11 +189,16 @@ class FamilyScreen extends ConsumerWidget {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                    itemCount: 6,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.88,
+                    ),
+                    itemCount: 4,
                     itemBuilder: (_, __) => Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         color: AppColors.border,
                       ),
                     ),
@@ -195,18 +223,20 @@ class FamilyScreen extends ConsumerWidget {
                     ),
                   )
                 else
-                  SizedBox(
-                    height: 118,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: photos.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (_, index) {
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.88,
+                    ),
+                    itemCount: photos.length,
+                    itemBuilder: (_, index) {
                         final photo = photos[index];
                         final canDelete = photo.uploadedBy == uid || members.any((m) => m.uid == uid && (m.role == 'fatherAdmin' || m.role == 'motherManager'));
-                        return SizedBox(
-                          width: 150,
-                          child: GestureDetector(
+                        return GestureDetector(
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -248,25 +278,42 @@ class FamilyScreen extends ConsumerWidget {
                                     );
                                   }
                                 : null,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(color: Colors.grey[200]),
-                                child: CachedNetworkImage(
-                                  imageUrl: photo.thumbnailUrl.isNotEmpty ? photo.thumbnailUrl : photo.imageUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                  errorWidget: (_, __, ___) => const Center(
-                                    child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                    child: CachedNetworkImage(
+                                      imageUrl: photo.thumbnailUrl.isNotEmpty ? photo.thumbnailUrl : photo.imageUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => Container(color: AppColors.border, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                                      errorWidget: (_, __, ___) => Container(
+                                        color: AppColors.border,
+                                        child: const Center(child: Icon(Icons.image_not_supported, color: AppColors.textSecondary)),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                Container(
+                                  height: 36,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(10)),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Text(
+                                    photo.caption?.isNotEmpty == true ? photo.caption! : 'Ảnh kỷ niệm',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
                         );
                       },
                     ),
-                  ),
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

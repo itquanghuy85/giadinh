@@ -3,6 +3,7 @@ import 'package:family_finance/app/app.dart';
 import 'package:family_finance/app/routes/app_routes.dart';
 import 'package:family_finance/app/theme/app_colors.dart';
 import 'package:family_finance/features/auth/providers/auth_provider.dart';
+import 'package:family_finance/scripts/clear_test_data.dart';
 import 'package:family_finance/shared/models/app_user.dart';
 import 'package:family_finance/shared/services/service_providers.dart';
 import 'package:family_finance/shared/widgets/app_back_button.dart';
@@ -186,8 +187,75 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _backupData() async {
+  Future<void> _clearAllData() async {
     final uid = ref.read(authControllerProvider).user?.uid ?? '';
+    if (uid.isEmpty) return;
+
+    // Bước 1: Xác nhận
+    final step1 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('⚠️ Xóa dữ liệu & Reset app'),
+        content: const Text(
+          'Hành động này sẽ xóa toàn bộ ví và giao dịch của bạn. Không thể hoàn tác.\n\nBạn có chắc chắn?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expense),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Tiếp tục'),
+          ),
+        ],
+      ),
+    );
+    if (step1 != true) return;
+
+    // Bước 2: Gõ "XÓA" để xác nhận
+    final confirmCtrl = TextEditingController();
+    final step2 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận lần cuối', style: TextStyle(color: AppColors.expense)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Gõ "XÓA" để xác nhận xóa toàn bộ dữ liệu:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmCtrl,
+              decoration: const InputDecoration(labelText: 'Gõ XÓA tại đây'),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expense),
+            onPressed: () => Navigator.pop(ctx, confirmCtrl.text.trim() == 'XÓA'),
+            child: const Text('Xóa ngay'),
+          ),
+        ],
+      ),
+    );
+    if (step2 != true) return;
+
+    try {
+      await ClearTestData.clearAllUserData(uid);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã xóa toàn bộ dữ liệu thành công')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi khi xóa: $e')),
+      );
+    }
+  }
+
+  Future<void> _backupData() async {    final uid = ref.read(authControllerProvider).user?.uid ?? '';
     if (uid.isEmpty) return;
     final svc = ref.read(firestoreServiceProvider);
     final db = svc.db;
@@ -405,6 +473,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // ── Nguy hiểm ─────────────────────────────────────
           const SizedBox(height: 20),
+          if (ref.watch(authControllerProvider).profile?.role.isAdmin ?? false) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.expense,
+                  side: const BorderSide(color: AppColors.expense),
+                ),
+                onPressed: _clearAllData,
+                icon: const Icon(Icons.delete_sweep_outlined),
+                label: const Text('Xóa dữ liệu & Reset app'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(

@@ -11,4 +11,6 @@ class AppRoutes {
   static const String joinFamily = '/join-family';
   static const String search = '/search';
   static const String familyMap = '/family-map';
+  static const String familyMapMembers = '/family-map-members';
+  static const String familyMapView = '/family-map-view';
 }

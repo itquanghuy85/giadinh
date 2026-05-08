@@ -156,10 +156,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.lg,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFF8F8FA),
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         ),
-        child: SingleChildScrollView(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: const Color(0xFF1A1A1A),
+              displayColor: const Color(0xFF1A1A1A),
+            ),
+          ),
+          child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -178,8 +185,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 focusNode: _amountFocus,
                 keyboardType: TextInputType.number,
                 inputFormatters: [ThousandsSeparatorFormatter()],
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-                decoration: const InputDecoration(labelText: 'Số tiền'),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1A1A1A),
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Số tiền',
+                  labelStyle: TextStyle(color: Color(0xFF555555)),
+                  hintStyle: TextStyle(color: Color(0xFF999999)),
+                ),
               ),
               const SizedBox(height: AppSpace.sm),
               SegmentedButton<TransactionType>(
@@ -205,8 +219,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   final selected = cat == _selectedCategory;
                   return ChoiceChip(
                     avatar: Icon(icon, size: 14, color: selected ? AppColors.primary : AppColors.textSecondary),
-                    label: Text(cat),
+                    label: Text(
+                      cat,
+                      style: TextStyle(
+                        color: selected ? AppColors.primary : const Color(0xFF555555),
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
                     selected: selected,
+                    selectedColor: AppColors.primary.withValues(alpha: 0.12),
+                    backgroundColor: const Color(0xFFF0F0F0),
                     onSelected: (_) => setState(() => _selectedCategory = cat),
                   );
                 }).toList(),
@@ -248,6 +270,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

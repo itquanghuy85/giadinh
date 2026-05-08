@@ -134,13 +134,14 @@ class AppTheme {
   }
 
   static ThemeData dark() {
-    const darkBg = Color(0xFF0D1117);
-    const darkSurface = Color(0xFF151B24);
-    const darkBorder = Color(0xFF283241);
-    const darkText = Color(0xFFEAF0F8);
-    const darkSubText = Color(0xFF99A7BA);
-    const darkPrimary = Color(0xFF4B7BFF);
-    final textTheme   = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
+    const darkBg = Color(0xFF0D0D1A);
+    const darkSurface = Color(0xFF1A1A2E);
+    const darkCard = Color(0xFF16213E);
+    const darkBorder = Color(0xFF2A2A45);
+    const darkText = Color(0xFFF0F0F0);
+    const darkSubText = Color(0xFFA0A0B0);
+    const darkPrimary = Color(0xFF7B73D4);
+    final textTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
@@ -185,7 +186,7 @@ class AppTheme {
         iconTheme: const IconThemeData(color: darkText),
       ),
       cardTheme: CardThemeData(
-        color: darkSurface,
+        color: darkCard,
         margin: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: 0),
         elevation: 0,
         shape: RoundedRectangleBorder(

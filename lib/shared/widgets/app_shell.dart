@@ -1,9 +1,6 @@
-import 'package:family_finance/app/routes/app_routes.dart';
-import 'package:family_finance/features/auth/providers/auth_provider.dart';
 import 'package:family_finance/features/calendar/presentation/calendar_screen.dart';
+import 'package:family_finance/features/family/presentation/family_screen.dart';
 import 'package:family_finance/features/home/presentation/home_screen.dart';
-import 'package:family_finance/features/settings/presentation/more_screen.dart';
-import 'package:family_finance/features/transaction/presentation/add_transaction_screen.dart';
 import 'package:family_finance/features/wallet/presentation/wallet_screen.dart';
 import 'package:family_finance/shared/services/connectivity_service.dart';
 import 'package:family_finance/shared/services/service_providers.dart';
@@ -37,15 +34,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
   }
 
-  void _openAddTransaction() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const AddTransactionScreen(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (!_checkedBiometric) {
@@ -64,12 +52,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       );
     }
 
-    final auth = ref.watch(authControllerProvider);
     final destinations = <NavigationDestination>[
       const NavigationDestination(
         icon: Icon(Icons.dashboard_outlined),
         selectedIcon: Icon(Icons.dashboard),
-        label: 'Home',
+        label: 'Trang chủ',
       ),
       const NavigationDestination(
         icon: Icon(Icons.account_balance_wallet_outlined),
@@ -77,28 +64,22 @@ class _AppShellState extends ConsumerState<AppShell> {
         label: 'Ví',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.add_circle_outline),
-        selectedIcon: Icon(Icons.add_circle),
-        label: 'Thêm',
-      ),
-      const NavigationDestination(
         icon: Icon(Icons.calendar_month_outlined),
         selectedIcon: Icon(Icons.calendar_month),
         label: 'Lịch',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.grid_view_outlined),
-        selectedIcon: Icon(Icons.grid_view_rounded),
-        label: 'Menu',
+        icon: Icon(Icons.groups_2_outlined),
+        selectedIcon: Icon(Icons.groups_2),
+        label: 'Gia đình',
       ),
     ];
 
     final screens = [
       const HomeScreen(),
       const WalletScreen(),
-      const SizedBox.shrink(),
       const CalendarScreen(),
-      const MoreScreen(),
+      const FamilyScreen(),
     ];
     final selectedIndex = _currentIndex >= screens.length ? 0 : _currentIndex;
 
@@ -115,27 +96,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
-          if (index == 2) {
-            _openAddTransaction();
-            return;
-          }
-
           setState(() => _currentIndex = index);
         },
         destinations: destinations,
-      ),
-      appBar: AppBar(
-        title: Text(
-          'Xin chào ${auth.profile?.displayName ?? 'thành viên'}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Cài đặt',
-          ),
-        ],
       ),
     );
   }
